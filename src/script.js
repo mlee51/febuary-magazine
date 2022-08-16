@@ -18,11 +18,11 @@ var bg_tex = new THREE.TextureLoader().load('/textures/8k_jupiter.jpg')
 bg_tex.mapping = THREE.EquirectangularReflectionMapping;
 scene.background = bg_tex
 // Object
-const geometry = new THREE.BoxGeometry(1, 10, 1)
+const geometry = new THREE.BoxGeometry(100, 100, 100)
 const material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
 const mesh = new THREE.Mesh(geometry, material)
-//mesh.position.set(new THREE.Vector3(0,0,0))
-//scene.add(mesh)
+mesh.position.set(new THREE.Vector3(0,0,0))
+scene.add(mesh)
 
 // Sizes
 const sizes = {
@@ -33,7 +33,7 @@ const sizes = {
 // Camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height)
 camera.fov = 84;
-camera.position.set(0, 3, 7)
+camera.position.set(3.3,1.27,-0.43)
 scene.add(camera)
 
 // Renderer
@@ -70,11 +70,14 @@ gui.add(unrealBloomPass, 'threshold').min(0).max(1).step(0.001)
 
 
 const controls = new OrbitControls(camera, renderer.domElement);
+controls.target = new THREE.Vector3(2.78, 1.09, -0.06)
+controls.minDistance = 1
+controls.maxDistance = 1
 //controls.minPolarAngle = Math.PI*0.4
-controls.maxPolarAngle = Math.PI * 0.4
+/*controls.maxPolarAngle = Math.PI * 0.4
 controls.target = new THREE.Vector3(1.64, 0, 0)
 controls.maxDistance = 7
-controls.minDistance = 3
+controls.minDistance = 3*/
 //gui.add(mesh.position,'x',-10,10);
 //gui.add(mesh.position,'z',-10,10);
 
@@ -122,8 +125,8 @@ gltfLoader.load(
     '/models/tree.glb',
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
-        // scene_group.add(glb.scene)
-        // updateAllMaterials()
+        scene_group.add(glb.scene)
+        updateAllMaterials()
     }
 )
 
@@ -225,7 +228,7 @@ function animate() {
 
     requestAnimationFrame(animate);
     // required if controls.enableDamping or controls.autoRotate are set to true
-    //controls.update();
+    controls.update();
     directionalLight.updateMatrixWorld()
     directionalLight.target.updateMatrixWorld()
     effectComposer.render();
