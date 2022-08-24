@@ -1,5 +1,6 @@
 import './style.css'
 import * as THREE from 'three'
+import CustomShaderMaterial from 'three-custom-shader-material/vanilla'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
@@ -15,6 +16,9 @@ var sampler1
 var sampler2
 var grassMesh1
 var grassMesh2
+var grassMaterial
+var _color
+const start = Date.now()
 const count = 5000
 
 const dummy = new THREE.Object3D();
@@ -92,6 +96,7 @@ controls.minDistance = 3*/
 //gui.add(mesh.position,'x',-10,10);
 //gui.add(mesh.position,'z',-10,10);
 
+
 window.addEventListener('resize', () => {
     sizes.width = window.innerWidth
     sizes.height = window.innerHeight
@@ -102,11 +107,11 @@ window.addEventListener('resize', () => {
 
 const updateAllMaterials = (floor) => {
     scene.traverse((child) => {
-        if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+        if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial || child instanceof THREE.Mesh && child.material instanceof CustomShaderMaterial) {
             if (floor !== true) child.castShadow = true
             if (floor === true) child.receiveShadow = true
             child.material.envMap = bg_tex
-            child.material.envMapIntensity = 1.8
+            child.material.envMapIntensity = 1.7
         }
     })
 }
@@ -131,7 +136,32 @@ gltfLoader.load(
         const defaultTransform = new THREE.Matrix4().makeRotationY(-Math.PI * 0.5)
         //.multiply( new THREE.Matrix4().makeScale( 7, 7, 7 )
         grassGeo.applyMatrix4(defaultTransform)
-        const grassMaterial = _grassMesh.material
+        grassGeo.rotateY(Math.random())
+        _color = _grassMesh.material.color
+        grassMaterial = new CustomShaderMaterial({
+            baseMaterial: THREE.MeshStandardMaterial,
+            vertexShader: `
+            varying vec2 vUv;
+            uniform float uTime;
+            void main() {
+                vUv = uv;
+                float time = uTime * 0.2;
+                //csm_Normal = normal * vec3(1.0,1.0+time,1.0);
+                csm_Position = position * vec3(1.0,1.0+time,1.0);
+            }
+            `,
+            uniforms: {
+                uTime: {
+                    value: 0.0,
+                },
+            },
+            //flatShading: true,
+            color: _color,
+        })
+        grassMaterial.roughness = 0.4
+        
+        grassMaterial.needsUpdate = true
+        console.log(grassMaterial)
         grassMesh1 = new THREE.InstancedMesh(grassGeo, grassMaterial, count)
     }
 )
@@ -145,6 +175,7 @@ gltfLoader.load(
         const defaultTransform = new THREE.Matrix4().makeRotationY(-Math.PI * 0.5)
         grassGeo.applyMatrix4(defaultTransform)
         const grassMaterial = _grassMesh.material
+        console.log(grassMaterial)
         grassMesh2 = new THREE.InstancedMesh(grassGeo, grassMaterial, Math.round(count * 0.25))
     }
 )
@@ -155,6 +186,7 @@ gltfLoader.load(
         console.log(3)
         glb.scene.scale.set(0.2, 0.2, 0.2)
         scene_group.add(glb.scene)
+        glb.scene.children[0].material.color = _color
         surface = glb.scene.children[0].clone()
         surface.geometry = glb.scene.children[0].geometry.clone().toNonIndexed()
         const defaultTransform = new THREE.Matrix4().makeTranslation(1.5, 0.0, 0.0).multiply(new THREE.Matrix4().makeScale(0.2, 0.2, 0.2));
@@ -287,7 +319,7 @@ function resampleParticle2(i) {
     sampler2.sample(_position, _normal);
     _normal.add(_position);
     dummy.position.copy(_position);
-    const randomScale = Math.random() * (1.4 - 0.25) + 0.25;
+    const randomScale = Math.random() * (1.0 - 0.25) + 0.25;
     dummy.scale.set(randomScale, randomScale, randomScale);
     dummy.lookAt(_normal);
     dummy.updateMatrix();
@@ -314,7 +346,10 @@ scene.add(directionalLight)
 
 
 function animate() {
-
+    if(grassMaterial) {
+        grassMaterial.uniforms.uTime.value = Math.sin((Date.now()-start)*0.0007)
+    } 
+    //sconsole.log(Math.sin((Date.now()-start)*0.00025))
     requestAnimationFrame(animate);
     // required if controls.enableDamping or controls.autoRotate are set to true
     controls.update();
