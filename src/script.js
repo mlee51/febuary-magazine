@@ -8,8 +8,10 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
-import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js';
+import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js'
+import gsap from 'gsap'
 import * as dat from 'lil-gui'
+import { Vector3 } from 'three'
 
 var surface
 var sampler1
@@ -18,6 +20,11 @@ var grassMesh1
 var grassMesh2
 var grassMaterial
 var _color
+var billboard
+var projector
+const nextCamPos = new THREE.Vector3(-1.94, 2.16, 3.22)
+const nextTargetPos = new THREE.Vector3(-3.36, 2.48, 4.17)
+const mouse = new THREE.Vector2()
 const start = Date.now()
 const count = 5000
 
@@ -58,6 +65,11 @@ renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 renderer.shadowMap.enabled = true
+
+
+///Raycaster
+const raycaster = new THREE.Raycaster()
+
 
 //Post processing
 const effectComposer = new EffectComposer(renderer)
@@ -105,6 +117,27 @@ window.addEventListener('resize', () => {
     renderer.setSize(sizes.width, sizes.height)
 })
 
+window.addEventListener('click', (event) =>
+{
+    mouse.x = event.clientX / sizes.width * 2 - 1
+    mouse.y = - (event.clientY / sizes.height) * 2 + 1
+
+    raycaster.setFromCamera(mouse, camera)
+    
+    const objectsToTest = [projector] //,billboard]
+    const intersects = raycaster.intersectObjects(objectsToTest)
+    if (intersects.length > 1) {
+        ///  {x: -1.9491872882088015, y: 2.1688007067866613, z: 3.2229767919680663}
+        /// target: {x: -3.369807487799218, y: 2.4898235335081917, z: 4.177417252782338}
+        //camera.position.set(-1.94, 2.16, 3.22)
+        gsap.to(camera.position, {...nextCamPos, duration: 2})
+        gsap.to(controls.target, {...nextTargetPos, duration: 2})
+        //controls.target.set(-3.36, 2.48, 4.17)
+        controls.update()
+    }
+    //console.log(intersects)
+})
+
 const updateAllMaterials = (floor) => {
     scene.traverse((child) => {
         if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial || child instanceof THREE.Mesh && child.material instanceof CustomShaderMaterial) {
@@ -130,7 +163,6 @@ gltfLoader.setDRACOLoader(dracoLoader)
 gltfLoader.load(
     '/models/grass1.glb',
     (glb) => {
-        console.log(1)
         const _grassMesh = glb.scene.getObjectByName('grass1')
         const grassGeo = _grassMesh.geometry.clone()
         const defaultTransform = new THREE.Matrix4().makeRotationY(-Math.PI * 0.5)
@@ -161,42 +193,40 @@ gltfLoader.load(
         grassMaterial.roughness = 0.4
         
         grassMaterial.needsUpdate = true
-        console.log(grassMaterial)
         grassMesh1 = new THREE.InstancedMesh(grassGeo, grassMaterial, count)
+
+        gltfLoader.load(
+            '/models/grass2.glb',
+            (glb) => {
+                const _grassMesh = glb.scene.getObjectByName('grass2')
+                const grassGeo = _grassMesh.geometry.clone()
+                const defaultTransform = new THREE.Matrix4().makeRotationY(-Math.PI * 0.5)
+                grassGeo.applyMatrix4(defaultTransform)
+                const grassMaterial = _grassMesh.material
+                grassMesh2 = new THREE.InstancedMesh(grassGeo, grassMaterial, Math.round(count * 0.25))
+
+
+                gltfLoader.load(
+                    '/models/floor.glb',
+                    (glb) => {
+                        glb.scene.scale.set(0.2, 0.2, 0.2)
+                        scene_group.add(glb.scene)
+                        glb.scene.children[0].material.color = _color
+                        surface = glb.scene.children[0].clone()
+                        surface.geometry = glb.scene.children[0].geometry.clone().toNonIndexed()
+                        const defaultTransform = new THREE.Matrix4().makeTranslation(1.5, 0.0, 0.0).multiply(new THREE.Matrix4().makeScale(0.2, 0.2, 0.2));
+                        surface.geometry.applyMatrix4(defaultTransform)
+                        resample()
+                        scene.add(grassMesh1)
+                        scene.add(grassMesh2)
+                        updateAllMaterials(true)
+                    }
+                )
+            }
+        )
     }
 )
 
-gltfLoader.load(
-    '/models/grass2.glb',
-    (glb) => {
-        console.log(2)
-        const _grassMesh = glb.scene.getObjectByName('grass2')
-        const grassGeo = _grassMesh.geometry.clone()
-        const defaultTransform = new THREE.Matrix4().makeRotationY(-Math.PI * 0.5)
-        grassGeo.applyMatrix4(defaultTransform)
-        const grassMaterial = _grassMesh.material
-        console.log(grassMaterial)
-        grassMesh2 = new THREE.InstancedMesh(grassGeo, grassMaterial, Math.round(count * 0.25))
-    }
-)
-
-gltfLoader.load(
-    '/models/floor.glb',
-    (glb) => {
-        console.log(3)
-        glb.scene.scale.set(0.2, 0.2, 0.2)
-        scene_group.add(glb.scene)
-        glb.scene.children[0].material.color = _color
-        surface = glb.scene.children[0].clone()
-        surface.geometry = glb.scene.children[0].geometry.clone().toNonIndexed()
-        const defaultTransform = new THREE.Matrix4().makeTranslation(1.5, 0.0, 0.0).multiply(new THREE.Matrix4().makeScale(0.2, 0.2, 0.2));
-        surface.geometry.applyMatrix4(defaultTransform)
-        resample()
-        scene.add(grassMesh1)
-        scene.add(grassMesh2)
-        updateAllMaterials(true)
-    }
-)
 
 gltfLoader.load(
     '/models/tree.glb',
@@ -229,7 +259,8 @@ gltfLoader.load(
     '/models/billboard.glb',
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
-        scene_group.add(glb.scene)
+        billboard = glb.scene
+        scene_group.add(billboard)
         updateAllMaterials()
     }
 )
@@ -238,7 +269,8 @@ gltfLoader.load(
     '/models/projector.glb',
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
-        scene_group.add(glb.scene)
+        projector = glb.scene
+        scene_group.add(projector)
         updateAllMaterials()
     }
 )
