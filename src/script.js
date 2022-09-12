@@ -11,7 +11,6 @@ import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js'
 import gsap from 'gsap'
 import * as dat from 'lil-gui'
-import { Vector3 } from 'three'
 
 var surface
 var sampler1
@@ -117,7 +116,7 @@ window.addEventListener('resize', () => {
     renderer.setSize(sizes.width, sizes.height)
 })
 
-window.addEventListener('click', (event) =>
+document.querySelector('body').addEventListener('click', (event) =>
 {
     mouse.x = event.clientX / sizes.width * 2 - 1
     mouse.y = - (event.clientY / sizes.height) * 2 + 1
