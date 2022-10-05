@@ -11,6 +11,7 @@ import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js'
 import gsap from 'gsap'
 import * as dat from 'lil-gui'
+import { Vector3 } from 'three'
 
 var surface
 var sampler1
@@ -21,8 +22,28 @@ var grassMaterial
 var _color
 var billboard
 var projector
-const nextCamPos = new THREE.Vector3(-1.94, 2.16, 3.22)
-const nextTargetPos = new THREE.Vector3(-3.36, 2.48, 4.17)
+var fabric
+const selections = []
+
+const _billboard = {
+    name: 'Cube005_2',
+    camPos: new THREE.Vector3(3.31, 2.48, -1.45),
+    targetPos: new THREE.Vector3(3.27, 2.37, -2.43) 
+};
+
+selections.push(_billboard)
+
+const _fabric = {
+    name: 'fabric_hitbox',
+    camPos: new THREE.Vector3(2.05, 1.12, -1.41),
+    targetPos: new THREE.Vector3(1.25, 0.97, -1.97) 
+};
+
+selections.push(_fabric)
+
+
+var nextCamPos = new THREE.Vector3(0,0,0)
+var nextTargetPos = new THREE.Vector3(0,0,0)
 const mouse = new THREE.Vector2()
 const start = Date.now()
 const count = 5000
@@ -52,7 +73,8 @@ const sizes = {
 // Camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height)
 camera.fov = 84;
-camera.position.set(3.3, 1.27, -0.43)
+const spawnPos = new THREE.Vector3(3.3, 1.27, -0.43)
+camera.position.set(...spawnPos)
 scene.add(camera)
 
 // Renderer
@@ -93,7 +115,8 @@ gui.add(unrealBloomPass, 'threshold').min(0).max(1).step(0.001)*/
 
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target = new THREE.Vector3(2.78, 1.09, -0.06)
+const spawnTarget = new THREE.Vector3(2.78, 1.09, -0.06)
+controls.target = spawnTarget
 //controls.minDistance = 1
 //controls.maxDistance = 1
 //controls.autoRotate = true
@@ -116,23 +139,39 @@ window.addEventListener('resize', () => {
     renderer.setSize(sizes.width, sizes.height)
 })
 
-document.querySelector('body').addEventListener('click', (event) =>
+let btn = document.createElement("button")
+btn.innerHTML = "HOME"
+btn.className = "home"
+document.body.appendChild(btn)
+btn.onclick = function (e) {
+    e.stopPropagation()
+    btn.style.display = "none"
+    gsap.to(camera.position, {...spawnPos, duration: 2})
+    gsap.to(controls.target,{...new THREE.Vector3(2.78,1.09,-0.06), duration: 2})
+    controls.update()
+};
+
+document.querySelector('canvas').addEventListener('mousedown', (event) =>
 {
     mouse.x = event.clientX / sizes.width * 2 - 1
     mouse.y = - (event.clientY / sizes.height) * 2 + 1
 
     raycaster.setFromCamera(mouse, camera)
     
-    const objectsToTest = [projector] //,billboard]
+    const objectsToTest = [fabric, billboard]
     const intersects = raycaster.intersectObjects(objectsToTest)
     if (intersects.length > 1) {
-        ///  {x: -1.9491872882088015, y: 2.1688007067866613, z: 3.2229767919680663}
-        /// target: {x: -3.369807487799218, y: 2.4898235335081917, z: 4.177417252782338}
-        //camera.position.set(-1.94, 2.16, 3.22)
-        gsap.to(camera.position, {...nextCamPos, duration: 2})
-        gsap.to(controls.target, {...nextTargetPos, duration: 2})
-        //controls.target.set(-3.36, 2.48, 4.17)
-        controls.update()
+        //console.log(intersects)
+        for(let i = 0; i < selections.length; i++){
+            if(selections[i].name === intersects[0].object.name){
+                nextCamPos = selections[i].camPos
+                nextTargetPos = selections[i].targetPos
+                gsap.to(camera.position, {...nextCamPos, duration: 2})
+                gsap.to(controls.target, {...nextTargetPos, duration: 2, onComplete: () => {btn.style.display = "block"}})
+                controls.update()
+                break
+            }
+        }
     }
     //console.log(intersects)
 })
@@ -278,7 +317,15 @@ gltfLoader.load(
     '/models/clothing_stuff.glb',
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
-        scene_group.add(glb.scene)
+        fabric = glb.scene
+        const geometry = new THREE.BoxGeometry( 3, 5, 1 );
+        const box = new THREE.Mesh( geometry, material );
+        box.name = 'fabric_hitbox'
+        box.position.set(7.3,5,-9)
+        box.rotateY(Math.PI*0.3)
+        box.visible = false
+        glb.scene.add(box)
+        scene_group.add(fabric)
         updateAllMaterials()
     }
 )
@@ -309,6 +356,16 @@ gltfLoader.load(
         updateAllMaterials()
     }
 )
+
+gltfLoader.load(
+    '/models/pacman.glb',
+    (glb) => {
+        glb.scene.scale.set(0.2, 0.2, 0.2)
+        scene_group.add(glb.scene)
+        updateAllMaterials()
+    }
+)
+
 
 function resample() {
 
@@ -387,7 +444,10 @@ function animate() {
     directionalLight.updateMatrixWorld()
     directionalLight.target.updateMatrixWorld()
     effectComposer.render();
-
+    /*console.log('camPos')
+    console.log(camera.position)
+    console.log('targetPos')
+    console.log(controls.target)*/
 }
 
 animate()
