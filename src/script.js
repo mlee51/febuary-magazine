@@ -7,11 +7,12 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js'
 import gsap from 'gsap'
 import * as dat from 'lil-gui'
-import { Vector3 } from 'three'
+
 
 var surface
 var sampler1
@@ -24,9 +25,13 @@ var billboard
 var projector
 var fabric
 const selections = []
+let selectedObjects = []
+let rayCasting = false
+
+const canvas = document.querySelector('canvas')
 
 const _billboard = {
-    name: 'Cube005_2',
+    name: 'billboard',
     camPos: new THREE.Vector3(3.31, 2.48, -1.45),
     targetPos: new THREE.Vector3(3.27, 2.37, -2.43) 
 };
@@ -34,7 +39,7 @@ const _billboard = {
 selections.push(_billboard)
 
 const _fabric = {
-    name: 'fabric_hitbox',
+    name: 'fabric',
     camPos: new THREE.Vector3(2.05, 1.12, -1.41),
     targetPos: new THREE.Vector3(1.25, 0.97, -1.97) 
 };
@@ -99,14 +104,23 @@ effectComposer.setPixelRatio(window.devicePixelRatio)
 
 const renderPass = new RenderPass(scene, camera)
 effectComposer.addPass(renderPass)
-const unrealBloomPass = new UnrealBloomPass()
-effectComposer.addPass(unrealBloomPass)
-const smaaPass = new SMAAPass()
-effectComposer.addPass(smaaPass)
 
+const outlinePass = new OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), scene, camera )
+outlinePass.edgeThickness = 3
+outlinePass.edgeStrength = 4
+outlinePass.edgeGlow = 0.5
+outlinePass.visibleEdgeColor.set( '#ffffff' );
+outlinePass.hiddenEdgeColor.set( '#ffffff' );
+effectComposer.addPass( outlinePass )
+
+const unrealBloomPass = new UnrealBloomPass()
 unrealBloomPass.strength = 0.22
 unrealBloomPass.radius = 0.829
 unrealBloomPass.threshold = 0.681
+effectComposer.addPass(unrealBloomPass)
+
+const smaaPass = new SMAAPass()
+effectComposer.addPass(smaaPass)
 
 /*gui.add(unrealBloomPass, 'enabled')
 gui.add(unrealBloomPass, 'strength').min(0).max(2).step(0.001)
@@ -146,35 +160,54 @@ document.body.appendChild(btn)
 btn.onclick = function (e) {
     e.stopPropagation()
     btn.style.display = "none"
+    controls.enabled = false
     gsap.to(camera.position, {...spawnPos, duration: 2})
-    gsap.to(controls.target,{...new THREE.Vector3(2.78,1.09,-0.06), duration: 2})
+    gsap.to(controls.target,{...new THREE.Vector3(2.78,1.09,-0.06), duration: 2, onComplete: () => { rayCasting = true, controls.enabled = true }})
     controls.update()
 };
 
-document.querySelector('canvas').addEventListener('mousedown', (event) =>
-{
-    mouse.x = event.clientX / sizes.width * 2 - 1
-    mouse.y = - (event.clientY / sizes.height) * 2 + 1
+canvas.addEventListener('mousemove', (event) => {
+    if (rayCasting) {
+        mouse.x = event.clientX / sizes.width * 2 - 1
+        mouse.y = - (event.clientY / sizes.height) * 2 + 1
+        raycaster.setFromCamera(mouse, camera)
+        const objectsToTest = [fabric, billboard]
+        const intersects = raycaster.intersectObjects(objectsToTest)
+        if (intersects.length > 1) {
+            if (selectedObjects.length < 1){
+                canvas.style.cursor = "pointer"
+                const selectedObject = intersects[0].object.parent
+                selectedObjects.push( selectedObject )
+                outlinePass.selectedObjects = selectedObjects
+            }
+        }else {
+            selectedObjects = []
+            outlinePass.selectedObjects = selectedObjects
+            canvas.style.cursor = "default"
+        }
+    }
+})
 
-    raycaster.setFromCamera(mouse, camera)
-    
-    const objectsToTest = [fabric, billboard]
-    const intersects = raycaster.intersectObjects(objectsToTest)
-    if (intersects.length > 1) {
-        //console.log(intersects)
-        for(let i = 0; i < selections.length; i++){
-            if(selections[i].name === intersects[0].object.name){
-                nextCamPos = selections[i].camPos
-                nextTargetPos = selections[i].targetPos
-                gsap.to(camera.position, {...nextCamPos, duration: 2})
-                gsap.to(controls.target, {...nextTargetPos, duration: 2, onComplete: () => {btn.style.display = "block"}})
-                controls.update()
-                break
+canvas.addEventListener('mousedown', (event) => {
+    if ( rayCasting && selectedObjects.length > 0 ) {
+        for (let i = 0; i < selections.length; i++) {
+            if (selections[i].name === selectedObjects[0].name) {
+            outlinePass.selectedObjects = []
+            rayCasting = false
+            nextCamPos = selections[i].camPos
+            nextTargetPos = selections[i].targetPos
+            controls.enabled = false
+            canvas.style.cursor = "default"
+            gsap.to(camera.position, {...nextCamPos, duration: 2})
+            gsap.to(controls.target, {...nextTargetPos, duration: 2, onComplete: () => {btn.style.display = "block", controls.enabled = true}})
+            controls.update()
+            return
             }
         }
     }
-    //console.log(intersects)
 })
+
+
 
 const updateAllMaterials = (floor) => {
     scene.traverse((child) => {
@@ -258,6 +291,7 @@ gltfLoader.load(
                         scene.add(grassMesh1)
                         scene.add(grassMesh2)
                         updateAllMaterials(true)
+                        rayCasting = true
                     }
                 )
             }
@@ -318,13 +352,16 @@ gltfLoader.load(
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
         fabric = glb.scene
-        const geometry = new THREE.BoxGeometry( 3, 5, 1 );
-        const box = new THREE.Mesh( geometry, material );
-        box.name = 'fabric_hitbox'
+        const geometry = new THREE.BoxGeometry( 3, 5, 1 )
+        const box = new THREE.Mesh( geometry, material )
         box.position.set(7.3,5,-9)
         box.rotateY(Math.PI*0.3)
         box.visible = false
         glb.scene.add(box)
+        glb.scene.children.forEach(child => {
+            child.name = 'fabric'
+        });
+        glb.scene.name = 'fabric'
         scene_group.add(fabric)
         updateAllMaterials()
     }
@@ -416,7 +453,7 @@ function resampleParticle2(i) {
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
 directionalLight.castShadow = true
-directionalLight.shadow.mapSize.set(1024, 1024)
+directionalLight.shadow.mapSize.set(512, 512)
 directionalLight.shadow.camera.far = 13
 directionalLight.shadow.camera.left = - 7
 directionalLight.shadow.camera.top = 1
@@ -436,7 +473,7 @@ scene.add(directionalLight)
 function animate() {
     if(grassMaterial) {
         grassMaterial.uniforms.uTime.value = Math.sin((Date.now()-start)*0.0007)
-    } 
+    }
     //sconsole.log(Math.sin((Date.now()-start)*0.00025))
     requestAnimationFrame(animate);
     // required if controls.enableDamping or controls.autoRotate are set to true
