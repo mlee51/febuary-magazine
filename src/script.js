@@ -33,7 +33,8 @@ const canvas = document.querySelector('canvas')
 const _billboard = {
     name: 'billboard',
     camPos: new THREE.Vector3(3.31, 2.48, -1.45),
-    targetPos: new THREE.Vector3(3.27, 2.37, -2.43) 
+    targetPos: new THREE.Vector3(3.27, 2.37, -2.43),
+    camUpZ: -1.744
 };
 
 selections.push(_billboard)
@@ -41,10 +42,20 @@ selections.push(_billboard)
 const _fabric = {
     name: 'fabric',
     camPos: new THREE.Vector3(2.05, 1.12, -1.41),
-    targetPos: new THREE.Vector3(1.25, 0.97, -1.97) 
+    targetPos: new THREE.Vector3(1.25, 0.97, -1.97),
+    camUpZ: -0.0524
 };
 
 selections.push(_fabric)
+
+const _dj = {
+    name: 'dj',
+    camPos: new THREE.Vector3(4.5, 0.77, -1.67),
+    targetPos: new THREE.Vector3(4.47, 0.1, -1.69),
+    camUpZ: 0.0042
+};
+
+selections.push(_dj)
 
 
 var nextCamPos = new THREE.Vector3(0,0,0)
@@ -131,6 +142,10 @@ gui.add(unrealBloomPass, 'threshold').min(0).max(1).step(0.001)*/
 const controls = new OrbitControls(camera, renderer.domElement);
 const spawnTarget = new THREE.Vector3(2.78, 1.09, -0.06)
 controls.target = spawnTarget
+/*if(controls.target) {
+    gui.add(camera.up,'z',-0.1,0.1)
+}*/
+
 //controls.minDistance = 1
 //controls.maxDistance = 1
 //controls.autoRotate = true
@@ -141,6 +156,7 @@ controls.target = spawnTarget
 controls.target = new THREE.Vector3(1.64, 0, 0)
 controls.maxDistance = 7
 controls.minDistance = 3*/
+
 //gui.add(mesh.position,'x',-10,10);
 //gui.add(mesh.position,'z',-10,10);
 
@@ -158,11 +174,13 @@ btn.innerHTML = "HOME"
 btn.className = "home"
 document.body.appendChild(btn)
 btn.onclick = function (e) {
+    camera.rotation.order = 'YXZ'
     e.stopPropagation()
     btn.style.display = "none"
     controls.enabled = false
     gsap.to(camera.position, {...spawnPos, duration: 2})
-    gsap.to(controls.target,{...new THREE.Vector3(2.78,1.09,-0.06), duration: 2, onComplete: () => { rayCasting = true, controls.enabled = true }})
+    gsap.to(camera.up,{z:0, duration: 2})
+    gsap.to(controls.target,{...new THREE.Vector3(2.78,1.09,-0.06), duration: 2, onComplete: () => { selectedObjects= [], rayCasting = true, controls.enabled = true }})
     controls.update()
 };
 
@@ -171,7 +189,7 @@ canvas.addEventListener('mousemove', (event) => {
         mouse.x = event.clientX / sizes.width * 2 - 1
         mouse.y = - (event.clientY / sizes.height) * 2 + 1
         raycaster.setFromCamera(mouse, camera)
-        const objectsToTest = [fabric, billboard]
+        const objectsToTest = [fabric, billboard, ...dj_group]
         const intersects = raycaster.intersectObjects(objectsToTest)
         if (intersects.length > 1) {
             if (selectedObjects.length < 1){
@@ -196,9 +214,11 @@ canvas.addEventListener('mousedown', (event) => {
             rayCasting = false
             nextCamPos = selections[i].camPos
             nextTargetPos = selections[i].targetPos
+            const upZ = selections[i].camUpZ
             controls.enabled = false
             canvas.style.cursor = "default"
             gsap.to(camera.position, {...nextCamPos, duration: 2})
+            gsap.to(camera.up,{z: upZ, duration: 2})
             gsap.to(controls.target, {...nextTargetPos, duration: 2, onComplete: () => {btn.style.display = "block", controls.enabled = true}})
             controls.update()
             return
@@ -220,8 +240,11 @@ const updateAllMaterials = (floor) => {
     })
 }
 
-const scene_group = new THREE.Group();
+const scene_group = new THREE.Group()
 scene.add(scene_group)
+
+const dj_group = []
+
 
 
 //Load Models
@@ -274,7 +297,7 @@ gltfLoader.load(
                 const defaultTransform = new THREE.Matrix4().makeRotationY(-Math.PI * 0.5)
                 grassGeo.applyMatrix4(defaultTransform)
                 const grassMaterial = _grassMesh.material
-                grassMesh2 = new THREE.InstancedMesh(grassGeo, grassMaterial, Math.round(count * 0.25))
+                grassMesh2 = new THREE.InstancedMesh(grassGeo, grassMaterial, Math.round(count * 0.15))
 
 
                 gltfLoader.load(
@@ -313,6 +336,11 @@ gltfLoader.load(
     '/models/speakers.glb',
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
+        glb.scene.children.forEach(child => {
+            child.name = 'dj'
+        });
+        glb.scene.name = 'dj'
+        dj_group.push(glb.scene)
         scene.add(glb.scene)
         updateAllMaterials()
     }
@@ -322,6 +350,11 @@ gltfLoader.load(
     '/models/table.glb',
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
+        glb.scene.children.forEach(child => {
+            child.name = 'dj'
+        });
+        glb.scene.name = 'dj'
+        dj_group.push(glb.scene)
         scene_group.add(glb.scene)
         updateAllMaterials()
     }
@@ -371,6 +404,17 @@ gltfLoader.load(
     '/models/cdj.glb',
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
+        glb.scene.children.forEach(child => {
+            child.name = 'dj'
+            child.children.forEach(child => {
+                child.name = 'dj'
+                child.children.forEach(child => {
+                    child.name = 'dj'
+                })
+            })
+        });
+        glb.scene.name = 'dj'
+        dj_group.push(glb.scene)
         scene_group.add(glb.scene)
         updateAllMaterials()
     }
