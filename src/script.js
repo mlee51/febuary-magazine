@@ -10,6 +10,8 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js'
+import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js'
+import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js'
 import gsap from 'gsap'
 import * as dat from 'lil-gui'
 
@@ -24,9 +26,17 @@ var _color
 var billboard
 var projector
 var fabric
+var hotspot
 const selections = []
 let selectedObjects = []
 let rayCasting = false
+var content = document.getElementById('billBoard')
+/*'<div>' +
+      '<h1>This is an H1 Element.</h1>' +
+      '<img src="../static/textures/billboard/1.jpg"></img>' +
+      '<span class="large">Hello Three.js cookbook</span>' +
+      '<textarea> And this is a textarea</textarea>' +
+    '</div>';*/
 
 const canvas = document.querySelector('canvas')
 
@@ -34,7 +44,8 @@ const _billboard = {
     name: 'billboard',
     camPos: new THREE.Vector3(3.31, 2.48, -1.45),
     targetPos: new THREE.Vector3(3.27, 2.37, -2.43),
-    camUpZ: -1.744
+    camUpZ: -1.744,
+    element: content
 };
 
 selections.push(_billboard)
@@ -80,6 +91,9 @@ scene.background = bg_tex
 mesh.position.set(new THREE.Vector3(0, 0, 0))
 scene.add(mesh)
 
+//const scene2 = new THREE.Scene();
+//scene2.scale.set(0.1, 0.1, 0.1);
+
 // Sizes
 const sizes = {
     width: window.innerWidth,
@@ -102,6 +116,10 @@ renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 renderer.shadowMap.enabled = true
+
+const cssRenderer = new CSS3DRenderer()
+cssRenderer.setSize(window.innerWidth, window.innerHeight)
+document.querySelector("#css").appendChild(cssRenderer.domElement);
 
 
 ///Raycaster
@@ -176,6 +194,7 @@ document.body.appendChild(btn)
 btn.onclick = function (e) {
     camera.rotation.order = 'YXZ'
     e.stopPropagation()
+    if (hotspot.element) hotspot.element.style = "none"
     btn.style.display = "none"
     controls.enabled = false
     gsap.to(camera.position, {...spawnPos, duration: 2})
@@ -206,20 +225,28 @@ canvas.addEventListener('mousemove', (event) => {
     }
 })
 
+function FadeInElement(element){
+    element.style.opacity = 0
+    element.style.display = "block"
+    gsap.to(element,{opacity: 1, duration: 1})
+}
+
 canvas.addEventListener('mousedown', (event) => {
     if ( rayCasting && selectedObjects.length > 0 ) {
         for (let i = 0; i < selections.length; i++) {
+            console.log(selectedObjects[0].name)
             if (selections[i].name === selectedObjects[0].name) {
             outlinePass.selectedObjects = []
             rayCasting = false
-            nextCamPos = selections[i].camPos
-            nextTargetPos = selections[i].targetPos
-            const upZ = selections[i].camUpZ
+            hotspot = selections[i]
+            nextCamPos = hotspot.camPos
+            nextTargetPos = hotspot.targetPos
+            const upZ = hotspot.camUpZ
             controls.enabled = false
             canvas.style.cursor = "default"
             gsap.to(camera.position, {...nextCamPos, duration: 2})
             gsap.to(camera.up,{z: upZ, duration: 2})
-            gsap.to(controls.target, {...nextTargetPos, duration: 2, onComplete: () => {btn.style.display = "block", controls.enabled = true}})
+            gsap.to(controls.target, {...nextTargetPos, duration: 2, onComplete: () => {btn.style.display = "block", hotspot.element? FadeInElement(hotspot.element) : '', controls.enabled = true}})
             controls.update()
             return
             }
@@ -314,6 +341,11 @@ gltfLoader.load(
                         scene.add(grassMesh1)
                         scene.add(grassMesh2)
                         updateAllMaterials(true)
+                        const l_door = document.getElementById('leftDoor')
+                        const r_door = document.getElementById('rightDoor')
+                        if(l_door) gsap.to(l_door,{x: -1000, duration: 3, onComplete: () => { l_door.style.display = 'none' }})
+                        if(r_door) gsap.to(r_door,{x: 1000, duration: 3, onComplete: () => { r_door.style.display = 'none' }})
+                        
                         rayCasting = true
                     }
                 )
@@ -365,6 +397,18 @@ gltfLoader.load(
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
         billboard = glb.scene
+        const screen_tex = new THREE.TextureLoader().load('/textures/billboard/1.jpg')
+        const geometry = new THREE.PlaneGeometry( 6.4, 10.7 );
+        const material = new THREE.MeshBasicMaterial( {map: screen_tex} );
+        const plane = new THREE.Mesh( geometry, material );
+        plane.position.set(16.05,11.5,-17.97)
+        plane.rotateZ(-Math.PI*0.02)
+        plane.rotateY(Math.PI*0.03)
+        plane.rotateX(-Math.PI*0.02)
+        billboard.name = plane.name = "billboard"
+        billboard.add( plane );
+        
+        //billboard.children[0].children[2].material.map = screen_tex
         scene_group.add(billboard)
         updateAllMaterials()
     }
@@ -512,7 +556,29 @@ scene.add(directionalLight)
 
 //const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
 //scene.add(directionalLightCameraHelper)
+function createCSS3DObject(content) 
+    {/*
+      // convert the string to dome elements
+      var wrapper = document.createElement('div');
+      wrapper.innerHTML = content;
+      var div = wrapper.firstChild;
 
+      // set some values on the div to style it.
+      // normally you do this directly in HTML and 
+      // CSS files.
+      div.style.width = '370px';
+      div.style.height = '370px';
+      div.style.opacity = 0.9;
+      div.style.background = new THREE.Color(Math.random() * 0xffffff).getStyle();*/
+
+      // create a CSS3Dobject and return it.
+      var object = new CSS3DObject(content);
+      return object;
+    }
+
+//var cssElement = createCSS3DObject(content);
+//cssElement.position.set(0, 0, 0);
+//scene2.add(cssElement);
 
 function animate() {
     if(grassMaterial) {
@@ -525,6 +591,7 @@ function animate() {
     directionalLight.updateMatrixWorld()
     directionalLight.target.updateMatrixWorld()
     effectComposer.render();
+    //cssRenderer.render(scene2,camera);
     /*console.log('camPos')
     console.log(camera.position)
     console.log('targetPos')
