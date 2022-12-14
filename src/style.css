@@ -21,10 +21,17 @@
     cursor: pointer;
 }
 
-/*html,
+html,
 body {
     overflow: hidden;
-}*/
+}
+
+#css {
+    position: fixed;
+    z-index: 1;
+    pointer-events: none;
+    height: 100vh;
+}
 
 #leftDoor {
     position: fixed;
@@ -41,16 +48,13 @@ body {
 }
 
 #billBoard {
-    width: 100%;
-    display: none;
-    position: absolute;
-    z-index: 1;
-    justify-content: center;
+    height:213px;
+    width:128px;
+    overflow: scroll;
     text-align: center;
 }
 
 #billBoard img {
-    width: 75%;
-    margin: auto;
+    width: 100%;
     display: block;
 }

@@ -15,7 +15,8 @@ import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js'
 import gsap from 'gsap'
 import * as dat from 'lil-gui'
 
-
+var isMobile = typeof window.orientation !== 'undefined'
+var isMobileSafari = isMobile && !window.navigator.userAgent.match(/CriOS/i)
 var surface
 var sampler1
 var sampler2
@@ -27,11 +28,15 @@ var billboard
 var projector
 var fabric
 var hotspot
+var deltaY
+var startY
+var old_deltaY = 0;
+var renderCSS = false
 const selections = []
 let selectedObjects = []
 let rayCasting = false
 var content = document.getElementById('billBoard')
-/*'<div>' +
+/*var content = '<div>' +
       '<h1>This is an H1 Element.</h1>' +
       '<img src="../static/textures/billboard/1.jpg"></img>' +
       '<span class="large">Hello Three.js cookbook</span>' +
@@ -91,18 +96,19 @@ scene.background = bg_tex
 mesh.position.set(new THREE.Vector3(0, 0, 0))
 scene.add(mesh)
 
-//const scene2 = new THREE.Scene();
-//scene2.scale.set(0.1, 0.1, 0.1);
+const scene2 = new THREE.Scene();
+scene2.scale.set(0.01, 0.01, 0.01);
 
 // Sizes
-const sizes = {
+const sizes = 
+{
     width: window.innerWidth,
     height: window.innerHeight
 }
 
+if (isMobileSafari) sizes.height -= 5;
 // Camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height)
-camera.fov = 84;
 const spawnPos = new THREE.Vector3(3.3, 1.27, -0.43)
 camera.position.set(...spawnPos)
 scene.add(camera)
@@ -118,8 +124,9 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap
 renderer.shadowMap.enabled = true
 
 const cssRenderer = new CSS3DRenderer()
-cssRenderer.setSize(window.innerWidth, window.innerHeight)
-document.querySelector("#css").appendChild(cssRenderer.domElement);
+cssRenderer.setSize(sizes.width, sizes.height)
+const cssContainer = document.querySelector("#css")
+cssContainer.appendChild(cssRenderer.domElement)
 
 
 ///Raycaster
@@ -160,6 +167,7 @@ gui.add(unrealBloomPass, 'threshold').min(0).max(1).step(0.001)*/
 const controls = new OrbitControls(camera, renderer.domElement);
 const spawnTarget = new THREE.Vector3(2.78, 1.09, -0.06)
 controls.target = spawnTarget
+controls.enableZoom = false
 /*if(controls.target) {
     gui.add(camera.up,'z',-0.1,0.1)
 }*/
@@ -185,7 +193,44 @@ window.addEventListener('resize', () => {
     camera.aspect = sizes.width / sizes.height
     camera.updateProjectionMatrix()
     renderer.setSize(sizes.width, sizes.height)
+    cssRenderer.setSize(sizes.width, sizes.height)
 })
+
+var mousedown = false
+
+
+cssContainer.addEventListener('mousedown', (e) => {
+    startY = e.clientY;
+    old_deltaY = content.scrollTop
+    mousedown = true
+});
+
+cssContainer.addEventListener('mouseup', (e) => {
+    mousedown = false
+});
+
+cssContainer.addEventListener('mousemove', (e) => {
+    if(mousedown) {
+        deltaY = e.clientY - startY
+        content.scrollTop = old_deltaY - deltaY
+    }
+});
+
+content.addEventListener('touchstart', (e) => {
+    startY = e.touches[0].clientY;
+    old_deltaY = content.scrollTop
+});
+
+content.addEventListener('touchmove', (e) => {
+    deltaY = e.touches[0].clientY - startY;
+    content.scrollTop = old_deltaY - deltaY
+});
+
+content.addEventListener('touchend', (e) => {
+   // old_deltaY = deltaY - startY
+   // alert(old_deltaY)
+});
+
 
 let btn = document.createElement("button")
 btn.innerHTML = "HOME"
@@ -194,12 +239,14 @@ document.body.appendChild(btn)
 btn.onclick = function (e) {
     camera.rotation.order = 'YXZ'
     e.stopPropagation()
-    if (hotspot.element) hotspot.element.style = "none"
+    renderCSS = false
+    if (hotspot.element) hotspot.element.style.display = "none"
     btn.style.display = "none"
     controls.enabled = false
     gsap.to(camera.position, {...spawnPos, duration: 2})
     gsap.to(camera.up,{z:0, duration: 2})
-    gsap.to(controls.target,{...new THREE.Vector3(2.78,1.09,-0.06), duration: 2, onComplete: () => { selectedObjects= [], rayCasting = true, controls.enabled = true }})
+    gsap.to(controls.target,{...new THREE.Vector3(2.78,1.09,-0.06), duration: 2,
+         onComplete: () => { selectedObjects= [], rayCasting = true, controls.enabled = true, cssContainer.style.pointerEvents = "none" }})
     controls.update()
 };
 
@@ -226,6 +273,7 @@ canvas.addEventListener('mousemove', (event) => {
 })
 
 function FadeInElement(element){
+    renderCSS = true
     element.style.opacity = 0
     element.style.display = "block"
     gsap.to(element,{opacity: 1, duration: 1})
@@ -234,7 +282,6 @@ function FadeInElement(element){
 canvas.addEventListener('mousedown', (event) => {
     if ( rayCasting && selectedObjects.length > 0 ) {
         for (let i = 0; i < selections.length; i++) {
-            console.log(selectedObjects[0].name)
             if (selections[i].name === selectedObjects[0].name) {
             outlinePass.selectedObjects = []
             rayCasting = false
@@ -246,7 +293,8 @@ canvas.addEventListener('mousedown', (event) => {
             canvas.style.cursor = "default"
             gsap.to(camera.position, {...nextCamPos, duration: 2})
             gsap.to(camera.up,{z: upZ, duration: 2})
-            gsap.to(controls.target, {...nextTargetPos, duration: 2, onComplete: () => {btn.style.display = "block", hotspot.element? FadeInElement(hotspot.element) : '', controls.enabled = true}})
+            gsap.to(controls.target, {...nextTargetPos, duration: 2,
+                 onComplete: () => {btn.style.display = "block", controls.enabled = false, hotspot.element? FadeInElement(hotspot.element) : "", cssContainer.style.pointerEvents = "auto"}})
             controls.update()
             return
             }
@@ -414,11 +462,39 @@ gltfLoader.load(
     }
 )
 
+function LoadVideo(){
+    var videlem = document.createElement("video");
+    var sourceMP4 = document.createElement("source");
+    sourceMP4.type = "video/mp4";
+    sourceMP4.src = '/textures/ORBIS IGNIS.mp4';
+    videlem.appendChild(sourceMP4);
+    videlem.autoplay = true;
+    videlem.muted = true;
+    videlem.setAttribute("crossorigin", "anonymous");
+    videlem.style.display = "none"; 
+  
+    videlem.load();
+    videlem.play();
+
+    let texture = new THREE.VideoTexture(videlem);
+    texture.crossOrigin = "anonymous";
+    texture.needsUpdate;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.format = THREE.RGBAFormat;
+    texture.flipY = false
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.repeat.x = - 1;
+    return texture
+}
+
 gltfLoader.load(
     '/models/projector.glb',
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
         projector = glb.scene
+        if (projector.children[2].children[1].material.map) projector.children[2].children[1].material.map = LoadVideo()
+        //projector.children[2].material.map = LoadVideo()
         scene_group.add(projector)
         updateAllMaterials()
     }
@@ -557,7 +633,8 @@ scene.add(directionalLight)
 //const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
 //scene.add(directionalLightCameraHelper)
 function createCSS3DObject(content) 
-    {/*
+    {
+    /*
       // convert the string to dome elements
       var wrapper = document.createElement('div');
       wrapper.innerHTML = content;
@@ -566,19 +643,24 @@ function createCSS3DObject(content)
       // set some values on the div to style it.
       // normally you do this directly in HTML and 
       // CSS files.
-      div.style.width = '370px';
-      div.style.height = '370px';
+      div.style.width = '70px';
+      div.style.height = '70px';
       div.style.opacity = 0.9;
       div.style.background = new THREE.Color(Math.random() * 0xffffff).getStyle();*/
+      
 
       // create a CSS3Dobject and return it.
       var object = new CSS3DObject(content);
+      object.renderOrder = Infinity;
       return object;
     }
 
-//var cssElement = createCSS3DObject(content);
-//cssElement.position.set(0, 0, 0);
-//scene2.add(cssElement);
+var cssElement = createCSS3DObject(content);
+isMobile? cssElement.position.set(322.5, 248, -360) : cssElement.position.set(321.5, 230.5, -359)
+cssElement.rotateZ(-Math.PI*0.02)
+cssElement.rotateY(Math.PI*0.03)
+cssElement.rotateX(-Math.PI*0.02)
+scene2.add(cssElement);
 
 function animate() {
     if(grassMaterial) {
@@ -590,8 +672,9 @@ function animate() {
     controls.update();
     directionalLight.updateMatrixWorld()
     directionalLight.target.updateMatrixWorld()
-    effectComposer.render();
-    //cssRenderer.render(scene2,camera);
+    
+    if (renderCSS) cssRenderer.render(scene2,camera);
+    else effectComposer.render();
     /*console.log('camPos')
     console.log(camera.position)
     console.log('targetPos')
