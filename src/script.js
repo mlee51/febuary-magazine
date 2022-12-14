@@ -216,6 +216,10 @@ cssContainer.addEventListener('mousemove', (e) => {
     }
 });
 
+cssContainer.addEventListener('mousewheel', (e) => {
+    content.scrollTop += e.deltaY
+});
+
 content.addEventListener('touchstart', (e) => {
     startY = e.touches[0].clientY;
     old_deltaY = content.scrollTop
@@ -446,6 +450,8 @@ gltfLoader.load(
         glb.scene.scale.set(0.2, 0.2, 0.2)
         billboard = glb.scene
         const screen_tex = new THREE.TextureLoader().load('/textures/billboard/1.jpg')
+        screen_tex.repeat = new THREE.Vector2(1.0,0.78)
+        screen_tex.offset = new THREE.Vector2(0,0.22)
         const geometry = new THREE.PlaneGeometry( 6.4, 10.7 );
         const material = new THREE.MeshBasicMaterial( {map: screen_tex} );
         const plane = new THREE.Mesh( geometry, material );
@@ -493,7 +499,7 @@ gltfLoader.load(
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
         projector = glb.scene
-        if (projector.children[2].children[1].material.map) projector.children[2].children[1].material.map = LoadVideo()
+        //if (projector.children[2].children[1].material.map) projector.children[2].children[1].material.map = LoadVideo()
         //projector.children[2].material.map = LoadVideo()
         scene_group.add(projector)
         updateAllMaterials()

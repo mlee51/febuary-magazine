@@ -38,6 +38,7 @@ body {
     z-index: 1;
     width: 100%;
     height: 100%;
+    pointer-events: none;
 }
 
 #rightDoor {
@@ -45,13 +46,15 @@ body {
     z-index: 1;
     width: 100%;
     height: 100%;
+    pointer-events: none;
 }
 
 #billBoard {
     height:213px;
     width:128px;
-    overflow: scroll;
+    overflow: hidden;
     text-align: center;
+    opacity: 0;
 }
 
 #billBoard img {
