@@ -220,6 +220,18 @@ cssContainer.addEventListener('mousewheel', (e) => {
     content.scrollTop += e.deltaY
 });
 
+cssContainer.addEventListener('touchstart', (e) => {
+    startY = e.touches[0].clientY;
+    old_deltaY = content.scrollTop
+});
+
+cssContainer.addEventListener('touchmove', (e) => {
+    deltaY = e.touches[0].clientY - startY;
+    content.scrollTop = old_deltaY - deltaY
+});
+
+
+
 content.addEventListener('touchstart', (e) => {
     startY = e.touches[0].clientY;
     old_deltaY = content.scrollTop
@@ -230,10 +242,10 @@ content.addEventListener('touchmove', (e) => {
     content.scrollTop = old_deltaY - deltaY
 });
 
-content.addEventListener('touchend', (e) => {
+/*content.addEventListener('touchend', (e) => {
    // old_deltaY = deltaY - startY
    // alert(old_deltaY)
-});
+});*/
 
 
 let btn = document.createElement("button")
@@ -469,28 +481,32 @@ gltfLoader.load(
 )
 
 function LoadVideo(){
-    var videlem = document.createElement("video");
-    var sourceMP4 = document.createElement("source");
+    //var videlem = document.createElement("video");
+    var videlem = document.getElementById('video');
+    /*var sourceMP4 = document.createElement("source");
     sourceMP4.type = "video/mp4";
-    sourceMP4.src = '/textures/ORBIS IGNIS.mp4';
+    sourceMP4.src = 'https://vod-progressive.akamaized.net/exp=1671494366~acl=%2Fvimeo-prod-skyfire-std-us%2F01%2F3628%2F28%2F718143497%2F3330335222.mp4~hmac=641da46e5aa3276b87f3e994a4dcbd06831858414b890df8df18ced6d557c569/vimeo-prod-skyfire-std-us/01/3628/28/718143497/3330335222.mp4?download=1&filename=orbis_ignis+%28720p%29.mp4';
     videlem.appendChild(sourceMP4);
     videlem.autoplay = true;
+    videlem.loop = true;
     videlem.muted = true;
+    videlem.playsInline = false;
     videlem.setAttribute("crossorigin", "anonymous");
     videlem.style.display = "none"; 
   
     videlem.load();
+    videlem.play();*/
+    videlem.load();
     videlem.play();
-
     let texture = new THREE.VideoTexture(videlem);
     texture.crossOrigin = "anonymous";
-    texture.needsUpdate;
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
     texture.format = THREE.RGBAFormat;
-    texture.flipY = false
+    //texture.flipY = false
     texture.wrapS = THREE.RepeatWrapping;
-    texture.repeat.x = - 1;
+    //texture.repeat.x = - 1;
+    texture.needsUpdate;
     return texture
 }
 
@@ -499,8 +515,21 @@ gltfLoader.load(
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
         projector = glb.scene
-        //if (projector.children[2].children[1].material.map) projector.children[2].children[1].material.map = LoadVideo()
+        const screen_tex = LoadVideo()//new THREE.TextureLoader().load('/textures/billboard/1.jpg')
+        //screen_tex.repeat = new THREE.Vector2(1.0,0.78)
+        //screen_tex.offset = new THREE.Vector2(0,0.22)
+        const geometry = new THREE.PlaneGeometry( 16*1.2, 9*1.2 );
+        const material = new THREE.MeshBasicMaterial( {map: screen_tex} );
+        const plane = new THREE.Mesh( geometry, material );
+        plane.position.set(-16.2,12.7,20.2)
+        //plane.rotateZ(-Math.PI*0.02)
+        plane.rotateY(Math.PI*0.685)
+        plane.rotateX(Math.PI*0.05)
+        //billboard.name = plane.name = "billboard"
+        projector.add( plane );
+        //if (projector.children[2].children[1] !== undefined) projector.children[2].children[1].material.map = LoadVideo()
         //projector.children[2].material.map = LoadVideo()
+        //projector.children[2].children[1].visible = false
         scene_group.add(projector)
         updateAllMaterials()
     }
