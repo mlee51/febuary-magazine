@@ -175,7 +175,7 @@ controls.enabled = false
 function init(){
     deviceOrientationControls = new DeviceOrientationControls(camera);
     deviceOrientationControls.enabled = true;
-    deviceOrientationControls.disconnect();
+    //deviceOrientationControls.disconnect();
 }
 
 /*if(controls.target) {
