@@ -12,6 +12,7 @@ import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js'
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js'
 import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js'
+import { DeviceOrientationControls } from './DeviceOrientationControls.js';
 import gsap from 'gsap'
 import * as dat from 'lil-gui'
 
@@ -35,6 +36,7 @@ var renderCSS = false
 const selections = []
 let selectedObjects = []
 let rayCasting = false
+let deviceOrientationControls
 var content = document.getElementById('billBoard')
 /*var content = '<div>' +
       '<h1>This is an H1 Element.</h1>' +
@@ -168,6 +170,14 @@ const controls = new OrbitControls(camera, renderer.domElement);
 const spawnTarget = new THREE.Vector3(2.78, 1.09, -0.06)
 controls.target = spawnTarget
 controls.enableZoom = false
+controls.enabled = false
+
+function init(){
+    deviceOrientationControls = new DeviceOrientationControls(camera);
+    deviceOrientationControls.enabled = true;
+    deviceOrientationControls.disconnect();
+}
+
 /*if(controls.target) {
     gui.add(camera.up,'z',-0.1,0.1)
 }*/
@@ -262,7 +272,7 @@ btn.onclick = function (e) {
     gsap.to(camera.position, {...spawnPos, duration: 2})
     gsap.to(camera.up,{z:0, duration: 2})
     gsap.to(controls.target,{...new THREE.Vector3(2.78,1.09,-0.06), duration: 2,
-         onComplete: () => { selectedObjects= [], rayCasting = true, controls.enabled = true, cssContainer.style.pointerEvents = "none" }})
+         onComplete: () => { selectedObjects= [], rayCasting = true, controls.enabled = false, cssContainer.style.pointerEvents = "none" }})
     controls.update()
 };
 
@@ -317,6 +327,13 @@ canvas.addEventListener('mousedown', (event) => {
         }
     }
 })
+
+const startButton = document.getElementById( 'startButton' );
+			startButton.addEventListener( 'click', function () {
+            init()
+			animate()
+
+			}, false );
 
 
 
@@ -704,7 +721,8 @@ function animate() {
     //sconsole.log(Math.sin((Date.now()-start)*0.00025))
     requestAnimationFrame(animate);
     // required if controls.enableDamping or controls.autoRotate are set to true
-    controls.update();
+    //controls.update();
+    deviceOrientationControls.update();
     directionalLight.updateMatrixWorld()
     directionalLight.target.updateMatrixWorld()
     
@@ -716,4 +734,4 @@ function animate() {
     console.log(controls.target)*/
 }
 
-animate()
+//animate()
