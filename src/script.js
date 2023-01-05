@@ -164,10 +164,13 @@ const controls = new OrbitControls(camera, renderer.domElement)
 const spawnTarget = new THREE.Vector3(2.78, 1.09, -0.06)
 controls.target = spawnTarget
 controls.enableZoom = false
+controls.enablePan = false
 
 function initDeviceOrientationControls() {
     deviceOrientationControls = new DeviceOrientationControls(camera)
     deviceOrientationControls.enabled = true
+    deviceOrientationControls.enablePan = false
+    deviceOrientationControls.enableZoom = false
     controls.enabled = false
     deviceControls = true
 }
