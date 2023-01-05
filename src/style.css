@@ -65,4 +65,5 @@ body {
 #startButton {
     position: fixed;
     z-index: 1;
+    display: none;
 }

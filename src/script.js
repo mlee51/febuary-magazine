@@ -293,6 +293,27 @@ canvas.addEventListener('mousemove', (event) => {
     }
 })
 
+function useCrosshairSelection(){
+    if (rayCasting) {
+        const center = new THREE.Vector2(0,0)
+        raycaster.setFromCamera(center, camera)
+        const objectsToTest = [fabric, billboard, ...dj_group]
+        const intersects = raycaster.intersectObjects(objectsToTest)
+        if (intersects.length > 1) {
+            if (selectedObjects.length < 1) {
+                canvas.style.cursor = "pointer"
+                const selectedObject = intersects[0].object.parent
+                selectedObjects.push(selectedObject)
+                outlinePass.selectedObjects = selectedObjects
+            }
+        } else {
+            selectedObjects = []
+            outlinePass.selectedObjects = selectedObjects
+            canvas.style.cursor = "default"
+        }
+    }
+}
+
 function FadeInElement(element) {
     renderCSS = true
     element.style.opacity = 0
@@ -326,9 +347,14 @@ canvas.addEventListener('mousedown', (event) => {
 })
 
 const startButton = document.getElementById('startButton');
-startButton.addEventListener('click', function () {
+if (!isMobile) {
+    startButton.remove()
+} else {
+    startButton.style.display = 'block'
+    startButton.addEventListener('click', function () {
     initDeviceOrientationControls()
 }, false);
+}
 
 const updateAllMaterials = (floor) => {
     scene.traverse((child) => {
@@ -680,7 +706,7 @@ function animate() {
     requestAnimationFrame(animate);
 
     deviceControls? deviceOrientationControls.update() : controls.update()
-
+    if (isMobile) useCrosshairSelection()
     directionalLight.updateMatrixWorld()
     directionalLight.target.updateMatrixWorld()
 
