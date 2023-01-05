@@ -65,22 +65,17 @@ var DeviceOrientationControls = function ( object ) {
 	}();
 
 	this.connect = function () {
-        console.log('connect')
 		onScreenOrientationChangeEvent(); // run once on load
 		// iOS 13+
 
 		if ( window.DeviceOrientationEvent !== undefined && typeof window.DeviceOrientationEvent.requestPermission === 'function' ) {
-			//alert('booz')
 			window.DeviceOrientationEvent.requestPermission().then( function ( response ) {
-                console.log('requested')
 
 				if ( response == 'granted' ) {
 
 					window.addEventListener( 'orientationchange', onScreenOrientationChangeEvent, false );
 					window.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
-					alert(response)
 				}
-                alert(response)
 
 			} ).catch( function ( error ) {
 				alert(error)
@@ -90,7 +85,6 @@ var DeviceOrientationControls = function ( object ) {
 			window.DeviceOrientationEvent.requestPermission().then((response)=> alert(response))
 
 		} else {
-			alert('desktop')
 			window.addEventListener( 'orientationchange', onScreenOrientationChangeEvent, false );
 			window.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
 

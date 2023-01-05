@@ -33,18 +33,12 @@ var deltaY
 var startY
 var old_deltaY = 0;
 var renderCSS = false
+var deviceControls = false
 const selections = []
 let selectedObjects = []
 let rayCasting = false
 let deviceOrientationControls
 var content = document.getElementById('billBoard')
-/*var content = '<div>' +
-      '<h1>This is an H1 Element.</h1>' +
-      '<img src="../static/textures/billboard/1.jpg"></img>' +
-      '<span class="large">Hello Three.js cookbook</span>' +
-      '<textarea> And this is a textarea</textarea>' +
-    '</div>';*/
-
 const canvas = document.querySelector('canvas')
 
 const _billboard = {
@@ -76,8 +70,8 @@ const _dj = {
 selections.push(_dj)
 
 
-var nextCamPos = new THREE.Vector3(0,0,0)
-var nextTargetPos = new THREE.Vector3(0,0,0)
+var nextCamPos = new THREE.Vector3(0, 0, 0)
+var nextTargetPos = new THREE.Vector3(0, 0, 0)
 const mouse = new THREE.Vector2()
 const start = Date.now()
 const count = 5000
@@ -102,7 +96,7 @@ const scene2 = new THREE.Scene();
 scene2.scale.set(0.01, 0.01, 0.01);
 
 // Sizes
-const sizes = 
+const sizes =
 {
     width: window.innerWidth,
     height: window.innerHeight
@@ -143,13 +137,13 @@ effectComposer.setPixelRatio(window.devicePixelRatio)
 const renderPass = new RenderPass(scene, camera)
 effectComposer.addPass(renderPass)
 
-const outlinePass = new OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), scene, camera )
+const outlinePass = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), scene, camera)
 outlinePass.edgeThickness = 3
 outlinePass.edgeStrength = 4
 outlinePass.edgeGlow = 0.5
-outlinePass.visibleEdgeColor.set( '#ffffff' );
-outlinePass.hiddenEdgeColor.set( '#ffffff' );
-effectComposer.addPass( outlinePass )
+outlinePass.visibleEdgeColor.set('#ffffff');
+outlinePass.hiddenEdgeColor.set('#ffffff');
+effectComposer.addPass(outlinePass)
 
 const unrealBloomPass = new UnrealBloomPass()
 unrealBloomPass.strength = 0.22
@@ -166,16 +160,16 @@ gui.add(unrealBloomPass, 'radius').min(0).max(2).step(0.001)
 gui.add(unrealBloomPass, 'threshold').min(0).max(1).step(0.001)*/
 
 
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement)
 const spawnTarget = new THREE.Vector3(2.78, 1.09, -0.06)
 controls.target = spawnTarget
 controls.enableZoom = false
-controls.enabled = false
 
-function init(){
-    deviceOrientationControls = new DeviceOrientationControls(camera);
-    deviceOrientationControls.enabled = true;
-    //deviceOrientationControls.disconnect();
+function initDeviceOrientationControls() {
+    deviceOrientationControls = new DeviceOrientationControls(camera)
+    deviceOrientationControls.enabled = true
+    controls.enabled = false
+    deviceControls = true
 }
 
 /*if(controls.target) {
@@ -220,7 +214,7 @@ cssContainer.addEventListener('mouseup', (e) => {
 });
 
 cssContainer.addEventListener('mousemove', (e) => {
-    if(mousedown) {
+    if (mousedown) {
         deltaY = e.clientY - startY
         content.scrollTop = old_deltaY - deltaY
     }
@@ -252,10 +246,6 @@ content.addEventListener('touchmove', (e) => {
     content.scrollTop = old_deltaY - deltaY
 });
 
-/*content.addEventListener('touchend', (e) => {
-   // old_deltaY = deltaY - startY
-   // alert(old_deltaY)
-});*/
 
 
 let btn = document.createElement("button")
@@ -269,10 +259,12 @@ btn.onclick = function (e) {
     if (hotspot.element) hotspot.element.style.display = "none"
     btn.style.display = "none"
     controls.enabled = false
-    gsap.to(camera.position, {...spawnPos, duration: 2})
-    gsap.to(camera.up,{z:0, duration: 2})
-    gsap.to(controls.target,{...new THREE.Vector3(2.78,1.09,-0.06), duration: 2,
-         onComplete: () => { selectedObjects= [], rayCasting = true, controls.enabled = false, cssContainer.style.pointerEvents = "none" }})
+    gsap.to(camera.position, { ...spawnPos, duration: 2 })
+    gsap.to(camera.up, { z: 0, duration: 2 })
+    gsap.to(controls.target, {
+        ...new THREE.Vector3(2.78, 1.09, -0.06), duration: 2,
+        onComplete: () => { selectedObjects = [], rayCasting = true, controls.enabled = true, cssContainer.style.pointerEvents = "none" }
+    })
     controls.update()
 };
 
@@ -284,13 +276,13 @@ canvas.addEventListener('mousemove', (event) => {
         const objectsToTest = [fabric, billboard, ...dj_group]
         const intersects = raycaster.intersectObjects(objectsToTest)
         if (intersects.length > 1) {
-            if (selectedObjects.length < 1){
+            if (selectedObjects.length < 1) {
                 canvas.style.cursor = "pointer"
                 const selectedObject = intersects[0].object.parent
-                selectedObjects.push( selectedObject )
+                selectedObjects.push(selectedObject)
                 outlinePass.selectedObjects = selectedObjects
             }
-        }else {
+        } else {
             selectedObjects = []
             outlinePass.selectedObjects = selectedObjects
             canvas.style.cursor = "default"
@@ -298,44 +290,42 @@ canvas.addEventListener('mousemove', (event) => {
     }
 })
 
-function FadeInElement(element){
+function FadeInElement(element) {
     renderCSS = true
     element.style.opacity = 0
     element.style.display = "block"
-    gsap.to(element,{opacity: 1, duration: 1})
+    gsap.to(element, { opacity: 1, duration: 1 })
 }
 
 canvas.addEventListener('mousedown', (event) => {
-    if ( rayCasting && selectedObjects.length > 0 ) {
+    if (rayCasting && selectedObjects.length > 0) {
         for (let i = 0; i < selections.length; i++) {
             if (selections[i].name === selectedObjects[0].name) {
-            outlinePass.selectedObjects = []
-            rayCasting = false
-            hotspot = selections[i]
-            nextCamPos = hotspot.camPos
-            nextTargetPos = hotspot.targetPos
-            const upZ = hotspot.camUpZ
-            controls.enabled = false
-            canvas.style.cursor = "default"
-            gsap.to(camera.position, {...nextCamPos, duration: 2})
-            gsap.to(camera.up,{z: upZ, duration: 2})
-            gsap.to(controls.target, {...nextTargetPos, duration: 2,
-                 onComplete: () => {btn.style.display = "block", controls.enabled = false, hotspot.element? FadeInElement(hotspot.element) : "", cssContainer.style.pointerEvents = "auto"}})
-            controls.update()
-            return
+                outlinePass.selectedObjects = []
+                rayCasting = false
+                hotspot = selections[i]
+                nextCamPos = hotspot.camPos
+                nextTargetPos = hotspot.targetPos
+                const upZ = hotspot.camUpZ
+                controls.enabled = false
+                canvas.style.cursor = "default"
+                gsap.to(camera.position, { ...nextCamPos, duration: 2 })
+                gsap.to(camera.up, { z: upZ, duration: 2 })
+                gsap.to(controls.target, {
+                    ...nextTargetPos, duration: 2,
+                    onComplete: () => { btn.style.display = "block", controls.enabled = false, hotspot.element ? FadeInElement(hotspot.element) : "", cssContainer.style.pointerEvents = "auto" }
+                })
+                controls.update()
+                return
             }
         }
     }
 })
 
-const startButton = document.getElementById( 'startButton' );
-			startButton.addEventListener( 'click', function () {
-            init()
-			animate()
-
-			}, false );
-
-
+const startButton = document.getElementById('startButton');
+startButton.addEventListener('click', function () {
+    initDeviceOrientationControls()
+}, false);
 
 const updateAllMaterials = (floor) => {
     scene.traverse((child) => {
@@ -393,7 +383,7 @@ gltfLoader.load(
             color: _color,
         })
         grassMaterial.roughness = 0.4
-        
+
         grassMaterial.needsUpdate = true
         grassMesh1 = new THREE.InstancedMesh(grassGeo, grassMaterial, count)
 
@@ -424,9 +414,9 @@ gltfLoader.load(
                         updateAllMaterials(true)
                         const l_door = document.getElementById('leftDoor')
                         const r_door = document.getElementById('rightDoor')
-                        if(l_door) gsap.to(l_door,{x: -1000, duration: 3, onComplete: () => { l_door.style.display = 'none' }})
-                        if(r_door) gsap.to(r_door,{x: 1000, duration: 3, onComplete: () => { r_door.style.display = 'none' }})
-                        
+                        if (l_door) gsap.to(l_door, { x: -1000, duration: 3, onComplete: () => { l_door.style.display = 'none' } })
+                        if (r_door) gsap.to(r_door, { x: 1000, duration: 3, onComplete: () => { r_door.style.display = 'none' } })
+
                         rayCasting = true
                     }
                 )
@@ -479,40 +469,24 @@ gltfLoader.load(
         glb.scene.scale.set(0.2, 0.2, 0.2)
         billboard = glb.scene
         const screen_tex = new THREE.TextureLoader().load('/textures/billboard/1.jpg')
-        screen_tex.repeat = new THREE.Vector2(1.0,0.78)
-        screen_tex.offset = new THREE.Vector2(0,0.22)
-        const geometry = new THREE.PlaneGeometry( 6.4, 10.7 );
-        const material = new THREE.MeshBasicMaterial( {map: screen_tex} );
-        const plane = new THREE.Mesh( geometry, material );
-        plane.position.set(16.05,11.5,-17.97)
-        plane.rotateZ(-Math.PI*0.02)
-        plane.rotateY(Math.PI*0.03)
-        plane.rotateX(-Math.PI*0.02)
+        screen_tex.repeat = new THREE.Vector2(1.0, 0.78)
+        screen_tex.offset = new THREE.Vector2(0, 0.22)
+        const geometry = new THREE.PlaneGeometry(6.4, 10.7);
+        const material = new THREE.MeshBasicMaterial({ map: screen_tex });
+        const plane = new THREE.Mesh(geometry, material);
+        plane.position.set(16.05, 11.5, -17.97)
+        plane.rotateZ(-Math.PI * 0.02)
+        plane.rotateY(Math.PI * 0.03)
+        plane.rotateX(-Math.PI * 0.02)
         billboard.name = plane.name = "billboard"
-        billboard.add( plane );
-        
-        //billboard.children[0].children[2].material.map = screen_tex
+        billboard.add(plane);
         scene_group.add(billboard)
         updateAllMaterials()
     }
 )
 
-function LoadVideo(){
-    //var videlem = document.createElement("video");
+function LoadVideo() {
     var videlem = document.getElementById('video');
-    /*var sourceMP4 = document.createElement("source");
-    sourceMP4.type = "video/mp4";
-    sourceMP4.src = 'https://vod-progressive.akamaized.net/exp=1671494366~acl=%2Fvimeo-prod-skyfire-std-us%2F01%2F3628%2F28%2F718143497%2F3330335222.mp4~hmac=641da46e5aa3276b87f3e994a4dcbd06831858414b890df8df18ced6d557c569/vimeo-prod-skyfire-std-us/01/3628/28/718143497/3330335222.mp4?download=1&filename=orbis_ignis+%28720p%29.mp4';
-    videlem.appendChild(sourceMP4);
-    videlem.autoplay = true;
-    videlem.loop = true;
-    videlem.muted = true;
-    videlem.playsInline = false;
-    videlem.setAttribute("crossorigin", "anonymous");
-    videlem.style.display = "none"; 
-  
-    videlem.load();
-    videlem.play();*/
     videlem.load();
     videlem.play();
     let texture = new THREE.VideoTexture(videlem);
@@ -535,15 +509,15 @@ gltfLoader.load(
         const screen_tex = LoadVideo()//new THREE.TextureLoader().load('/textures/billboard/1.jpg')
         //screen_tex.repeat = new THREE.Vector2(1.0,0.78)
         //screen_tex.offset = new THREE.Vector2(0,0.22)
-        const geometry = new THREE.PlaneGeometry( 16*1.2, 9*1.2 );
-        const material = new THREE.MeshBasicMaterial( {map: screen_tex} );
-        const plane = new THREE.Mesh( geometry, material );
-        plane.position.set(-16.2,12.7,20.2)
+        const geometry = new THREE.PlaneGeometry(16 * 1.2, 9 * 1.2);
+        const material = new THREE.MeshBasicMaterial({ map: screen_tex });
+        const plane = new THREE.Mesh(geometry, material);
+        plane.position.set(-16.2, 12.7, 20.2)
         //plane.rotateZ(-Math.PI*0.02)
-        plane.rotateY(Math.PI*0.685)
-        plane.rotateX(Math.PI*0.05)
+        plane.rotateY(Math.PI * 0.685)
+        plane.rotateX(Math.PI * 0.05)
         //billboard.name = plane.name = "billboard"
-        projector.add( plane );
+        projector.add(plane);
         //if (projector.children[2].children[1] !== undefined) projector.children[2].children[1].material.map = LoadVideo()
         //projector.children[2].material.map = LoadVideo()
         //projector.children[2].children[1].visible = false
@@ -557,10 +531,10 @@ gltfLoader.load(
     (glb) => {
         glb.scene.scale.set(0.2, 0.2, 0.2)
         fabric = glb.scene
-        const geometry = new THREE.BoxGeometry( 3, 5, 1 )
-        const box = new THREE.Mesh( geometry, material )
-        box.position.set(7.3,5,-9)
-        box.rotateY(Math.PI*0.3)
+        const geometry = new THREE.BoxGeometry(3, 5, 1)
+        const box = new THREE.Mesh(geometry, material)
+        box.position.set(7.3, 5, -9)
+        box.rotateY(Math.PI * 0.3)
         box.visible = false
         glb.scene.add(box)
         glb.scene.children.forEach(child => {
@@ -682,51 +656,32 @@ directionalLight.position.set(1, 7, 0)
 directionalLight.target.position.set(-2, 3, 0)
 scene.add(directionalLight)
 
-//const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
-//scene.add(directionalLightCameraHelper)
-function createCSS3DObject(content) 
-    {
-    /*
-      // convert the string to dome elements
-      var wrapper = document.createElement('div');
-      wrapper.innerHTML = content;
-      var div = wrapper.firstChild;
 
-      // set some values on the div to style it.
-      // normally you do this directly in HTML and 
-      // CSS files.
-      div.style.width = '70px';
-      div.style.height = '70px';
-      div.style.opacity = 0.9;
-      div.style.background = new THREE.Color(Math.random() * 0xffffff).getStyle();*/
-      
-
-      // create a CSS3Dobject and return it.
-      var object = new CSS3DObject(content);
-      object.renderOrder = Infinity;
-      return object;
-    }
+function createCSS3DObject(content) {
+    var object = new CSS3DObject(content);
+    object.renderOrder = Infinity;
+    return object;
+}
 
 var cssElement = createCSS3DObject(content);
-isMobile? cssElement.position.set(322.5, 248, -360) : cssElement.position.set(321.5, 230.5, -359)
-cssElement.rotateZ(-Math.PI*0.02)
-cssElement.rotateY(Math.PI*0.03)
-cssElement.rotateX(-Math.PI*0.02)
+isMobile ? cssElement.position.set(322.5, 248, -360) : cssElement.position.set(321.5, 230.5, -359)
+cssElement.rotateZ(-Math.PI * 0.02)
+cssElement.rotateY(Math.PI * 0.03)
+cssElement.rotateX(-Math.PI * 0.02)
 scene2.add(cssElement);
 
 function animate() {
-    if(grassMaterial) {
-        grassMaterial.uniforms.uTime.value = Math.sin((Date.now()-start)*0.0007)
+    if (grassMaterial) {
+        grassMaterial.uniforms.uTime.value = Math.sin((Date.now() - start) * 0.0007)
     }
-    //sconsole.log(Math.sin((Date.now()-start)*0.00025))
     requestAnimationFrame(animate);
-    // required if controls.enableDamping or controls.autoRotate are set to true
-    //controls.update();
-    deviceOrientationControls.update();
+
+    deviceControls? deviceOrientationControls.update() : controls.update()
+
     directionalLight.updateMatrixWorld()
     directionalLight.target.updateMatrixWorld()
-    
-    if (renderCSS) cssRenderer.render(scene2,camera);
+
+    if (renderCSS) cssRenderer.render(scene2, camera);
     else effectComposer.render();
     /*console.log('camPos')
     console.log(camera.position)
@@ -734,4 +689,4 @@ function animate() {
     console.log(controls.target)*/
 }
 
-//animate()
+animate()
