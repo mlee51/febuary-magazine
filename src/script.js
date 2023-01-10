@@ -94,20 +94,26 @@ scene.add(mesh)
 
 const scene2 = new THREE.Scene();
 scene2.scale.set(0.01, 0.01, 0.01);
-
+var innerHeight = require('ios-inner-height');
 // Sizes
 const sizes =
 {
     width: window.innerWidth,
     height: window.innerHeight
 }
+//alert(window.innerHeight)
+//alert(window.innerWidth)
 
-if (isMobileSafari) sizes.height -= 5;
+
+// now anytime you need it, get a reliable window height
+alert('Mobile Safari: ' + isMobileSafari);
+//if (isMobileSafari) sizes.height -= 5
 // Camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height)
 const spawnPos = new THREE.Vector3(3.3, 1.27, -0.43)
 camera.position.set(...spawnPos)
 scene.add(camera)
+//gui.add(camera, 'fov', 0, 120, 1);
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({
@@ -121,6 +127,8 @@ renderer.shadowMap.enabled = true
 
 const cssRenderer = new CSS3DRenderer()
 cssRenderer.setSize(sizes.width, sizes.height)
+
+
 const cssContainer = document.querySelector("#css")
 cssContainer.appendChild(cssRenderer.domElement)
 
@@ -137,7 +145,7 @@ effectComposer.setPixelRatio(window.devicePixelRatio)
 const renderPass = new RenderPass(scene, camera)
 effectComposer.addPass(renderPass)
 
-const outlinePass = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), scene, camera)
+const outlinePass = new OutlinePass(new THREE.Vector2(sizes.width, sizes.height), scene, camera)
 outlinePass.edgeThickness = 3
 outlinePass.edgeStrength = 4
 outlinePass.edgeGlow = 0.5
@@ -293,9 +301,9 @@ canvas.addEventListener('mousemove', (event) => {
     }
 })
 
-function useCrosshairSelection(){
+function useCrosshairSelection() {
     if (rayCasting) {
-        const center = new THREE.Vector2(0,0)
+        const center = new THREE.Vector2(0, 0)
         raycaster.setFromCamera(center, camera)
         const objectsToTest = [fabric, billboard, ...dj_group]
         const intersects = raycaster.intersectObjects(objectsToTest)
@@ -352,8 +360,8 @@ if (!isMobile) {
 } else {
     startButton.style.display = 'block'
     startButton.addEventListener('click', function () {
-    initDeviceOrientationControls()
-}, false);
+        initDeviceOrientationControls()
+    }, false);
 }
 
 const updateAllMaterials = (floor) => {
@@ -688,12 +696,18 @@ scene.add(directionalLight)
 
 function createCSS3DObject(content) {
     var object = new CSS3DObject(content);
+    //object.element.style.height = (object.element.style.height% 2 === 0 ? object.element.style.height: object.element.style.height- 1)+'px'
     object.renderOrder = Infinity;
     return object;
 }
 
 var cssElement = createCSS3DObject(content);
-isMobile ? cssElement.position.set(322.5, 248, -360) : cssElement.position.set(321.5, 230.5, -359)
+//isMobile ? cssElement.position.set(322.5, 248, -360) : cssElement.position.set(321.5, 230.5, -359)
+let y = 230.5
+if (isMobile) y = 248
+if (isMobileSafari) y = 215
+cssElement.position.set(321.5, y, -359)
+//gui.add(cssElement.position, 'y', 0, 500, 1);
 cssElement.rotateZ(-Math.PI * 0.02)
 cssElement.rotateY(Math.PI * 0.03)
 cssElement.rotateX(-Math.PI * 0.02)
@@ -705,7 +719,7 @@ function animate() {
     }
     requestAnimationFrame(animate);
 
-    deviceControls? deviceOrientationControls.update() : controls.update()
+    deviceControls ? deviceOrientationControls.update() : controls.update()
     if (isMobile) useCrosshairSelection()
     directionalLight.updateMatrixWorld()
     directionalLight.target.updateMatrixWorld()

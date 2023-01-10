@@ -3,6 +3,7 @@
     padding: 0;
 }
 
+
 .webgl {
     position: fixed;
     top: 0;
@@ -24,6 +25,10 @@
 html,
 body {
     overflow: hidden;
+}
+
+body {
+    margin: 0;
 }
 
 #css {
