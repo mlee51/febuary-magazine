@@ -10,8 +10,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js'
-import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js'
-import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js'
+import { CSS3DRenderer, CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js'
 import { DeviceOrientationControls } from './DeviceOrientationControls.js';
 import gsap from 'gsap'
 import * as dat from 'lil-gui'
@@ -98,18 +97,19 @@ var innerHeight = require('ios-inner-height');
 // Sizes
 const sizes =
 {
-    width: window.innerWidth,
-    height: window.innerHeight
+    width: isMobile? window.outerWidth : window.innerWidth,
+    height: isMobile? window.outerHeight : window.innerHeight
 }
 //alert(window.innerHeight)
 //alert(window.innerWidth)
 
 
 // now anytime you need it, get a reliable window height
-alert('Mobile Safari: ' + isMobileSafari);
+//alert('Mobile Safari: ' + isMobileSafari);
 //if (isMobileSafari) sizes.height -= 5
 // Camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height)
+const camera = new THREE.PerspectiveCamera(isMobile? 85:75, sizes.width / sizes.height)
+if (isMobile) camera.setViewOffset( sizes.width, sizes.height, 0, 80, sizes.width, sizes.height );
 const spawnPos = new THREE.Vector3(3.3, 1.27, -0.43)
 camera.position.set(...spawnPos)
 scene.add(camera)
@@ -702,11 +702,9 @@ function createCSS3DObject(content) {
 }
 
 var cssElement = createCSS3DObject(content);
-//isMobile ? cssElement.position.set(322.5, 248, -360) : cssElement.position.set(321.5, 230.5, -359)
-let y = 230.5
-if (isMobile) y = 248
-if (isMobileSafari) y = 215
-cssElement.position.set(321.5, y, -359)
+isMobile ? cssElement.position.set(323, 268, -363) : cssElement.position.set(321.5, 230.5, -359)
+//let y = isMobile? 260:230.5
+//cssElement.position.set(321.5, y, -359)
 //gui.add(cssElement.position, 'y', 0, 500, 1);
 cssElement.rotateZ(-Math.PI * 0.02)
 cssElement.rotateY(Math.PI * 0.03)
@@ -723,9 +721,9 @@ function animate() {
     if (isMobile) useCrosshairSelection()
     directionalLight.updateMatrixWorld()
     directionalLight.target.updateMatrixWorld()
-
-    if (renderCSS) cssRenderer.render(scene2, camera);
-    else effectComposer.render();
+    camera.updateProjectionMatrix()
+        if (renderCSS) cssRenderer.render(scene2, camera);
+        else effectComposer.render();
     /*console.log('camPos')
     console.log(camera.position)
     console.log('targetPos')
