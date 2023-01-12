@@ -509,11 +509,11 @@ gltfLoader.load(
         screen_tex.repeat = new THREE.Vector2(1.0, 0.78)
         screen_tex.offset = new THREE.Vector2(0, 0.22)
         const geometry = new THREE.PlaneGeometry(6.4, 10.7);
-        const material = new THREE.MeshBasicMaterial({ map: screen_tex });
+        const material = new THREE.MeshBasicMaterial({ map: screen_tex, color: 'white'});
         const plane = new THREE.Mesh(geometry, material);
         plane.position.set(16.05, 11.5, -17.97)
         plane.rotateZ(-Math.PI * 0.02)
-        plane.rotateY(Math.PI * 0.03)
+        plane.rotateY(Math.PI * 0.025)
         plane.rotateX(-Math.PI * 0.02)
         billboard.name = plane.name = "billboard"
         billboard.add(plane);
@@ -702,13 +702,14 @@ function createCSS3DObject(content) {
 }
 
 var cssElement = createCSS3DObject(content);
-isMobile ? cssElement.position.set(323, 248, -363) : cssElement.position.set(321.5, 230.5, -359)
+isMobile ? cssElement.position.set(323, 251, -363) : cssElement.position.set(321.5, 231.1, -359)
 //let y = isMobile? 260:230.5
 //cssElement.position.set(321.5, y, -359)
 gui.add(cssElement.position, 'y', 200, 300, .1);
 cssElement.rotateZ(-Math.PI * 0.02)
-cssElement.rotateY(Math.PI * 0.03)
+cssElement.rotateY(Math.PI * 0.025)
 cssElement.rotateX(-Math.PI * 0.02)
+
 scene2.add(cssElement);
 
 function animate() {
