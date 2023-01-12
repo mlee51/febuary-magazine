@@ -79,7 +79,7 @@ const dummy = new THREE.Object3D();
 const _position = new THREE.Vector3();
 const _normal = new THREE.Vector3();
 
-//const gui = new dat.GUI()
+const gui = new dat.GUI()
 const scene = new THREE.Scene()
 const geometry = new THREE.BoxGeometry(100, 100, 100)
 const material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
@@ -702,10 +702,10 @@ function createCSS3DObject(content) {
 }
 
 var cssElement = createCSS3DObject(content);
-isMobile ? cssElement.position.set(323, 268, -363) : cssElement.position.set(321.5, 230.5, -359)
+isMobile ? cssElement.position.set(323, 248, -363) : cssElement.position.set(321.5, 230.5, -359)
 //let y = isMobile? 260:230.5
 //cssElement.position.set(321.5, y, -359)
-//gui.add(cssElement.position, 'y', 0, 500, 1);
+gui.add(cssElement.position, 'y', 200, 300, .1);
 cssElement.rotateZ(-Math.PI * 0.02)
 cssElement.rotateY(Math.PI * 0.03)
 cssElement.rotateX(-Math.PI * 0.02)
