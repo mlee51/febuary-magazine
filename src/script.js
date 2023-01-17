@@ -272,7 +272,14 @@ btn.onclick = function (e) {
     if (hotspot.element) hotspot.element.style.display = "none"
     btn.style.display = "none"
     controls.enabled = false
-    if (deviceControls && !deviceControlsActive) deviceControlsActive = true
+    if (deviceControls && !deviceControlsActive){
+        const currentPos = camera.position.clone()
+        const currentRot = camera.rotation.clone()
+        deviceOrientationControls.enabled = true
+        deviceControlsActive = true
+        camera.position.copy(currentPos)
+        camera.rotation.copy(currentRot)
+    }
     gsap.to(camera.position, { ...spawnPos, duration: 2 })
     gsap.to(camera.up, { z: 0, duration: 2 })
     gsap.to(controls.target, {
@@ -336,7 +343,14 @@ canvas.addEventListener('mousedown', (event) => {
     if (rayCasting && selectedObjects.length > 0) {
         for (let i = 0; i < selections.length; i++) {
             if (selections[i].name === selectedObjects[0].name) {
-                if(deviceControls && deviceControlsActive) deviceControlsActive = false
+                if(deviceControls && deviceControlsActive){
+                    const currentPos = camera.position.clone()
+                    const currentRot = camera.rotation.clone()
+                    deviceOrientationControls.enabled = false
+                    deviceControlsActive = false
+                    camera.position.copy(currentPos)
+                    camera.rotation.copy(currentRot)
+                } 
                 outlinePass.selectedObjects = []
                 rayCasting = false
                 hotspot = selections[i]
