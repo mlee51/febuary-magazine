@@ -11,7 +11,8 @@ import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js'
 import { CSS3DRenderer, CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js'
-import { DeviceOrientationControls } from './DeviceOrientationControls.js';
+import { DeviceOrientationControls } from './DeviceOrientationControls.js'
+import QrScanner from "qr-scanner"
 import gsap from 'gsap'
 import * as dat from 'lil-gui'
 
@@ -41,6 +42,15 @@ let deviceOrientationControls
 var animating = false
 var content = document.getElementById('billBoard')
 const canvas = document.querySelector('canvas')
+
+const videoElem = document.getElementById('qr')
+
+const qrScanner = new QrScanner(
+    videoElem,
+    result => alert('decoded qr code:', result),
+    { /* your options or returnDetailedScanResult: true if you're not specifying any other options */ },
+);
+
 
 const _billboard = {
     name: 'billboard',
@@ -376,7 +386,9 @@ if (!isMobile) {
 } else {
     startButton.style.display = 'block'
     startButton.addEventListener('click', function () {
-        initDeviceOrientationControls()
+        qrScanner.start()
+        alert("hi")
+        //initDeviceOrientationControls()
     }, false);
 }
 
