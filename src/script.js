@@ -38,6 +38,7 @@ const selections = []
 let selectedObjects = []
 let rayCasting = false
 let deviceOrientationControls
+var animating = false
 var content = document.getElementById('billBoard')
 const canvas = document.querySelector('canvas')
 
@@ -273,12 +274,8 @@ btn.onclick = function (e) {
     btn.style.display = "none"
     controls.enabled = false
     if (deviceControls && !deviceControlsActive){
-        const currentPos = camera.position.clone()
-        const currentRot = camera.rotation.clone()
         deviceOrientationControls.enabled = true
         deviceControlsActive = true
-        camera.position.copy(currentPos)
-        camera.rotation.copy(currentRot)
     }
     gsap.to(camera.position, { ...spawnPos, duration: 2 })
     gsap.to(camera.up, { z: 0, duration: 2 })
@@ -344,12 +341,8 @@ canvas.addEventListener('mousedown', (event) => {
         for (let i = 0; i < selections.length; i++) {
             if (selections[i].name === selectedObjects[0].name) {
                 if(deviceControls && deviceControlsActive){
-                    const currentPos = camera.position.clone()
-                    const currentRot = camera.rotation.clone()
                     deviceOrientationControls.enabled = false
                     deviceControlsActive = false
-                    camera.position.copy(currentPos)
-                    camera.rotation.copy(currentRot)
                 } 
                 outlinePass.selectedObjects = []
                 rayCasting = false
@@ -359,11 +352,12 @@ canvas.addEventListener('mousedown', (event) => {
                 const upZ = hotspot.camUpZ
                 controls.enabled = false
                 canvas.style.cursor = "default"
+                animating = true
                 gsap.to(camera.position, { ...nextCamPos, duration: 2 })
                 gsap.to(camera.up, { z: upZ, duration: 2 })
                 gsap.to(controls.target, {
                     ...nextTargetPos, duration: 2,
-                    onComplete: () => { btn.style.display = "block", controls.enabled = false, hotspot.element ? FadeInElement(hotspot.element) : "", cssContainer.style.pointerEvents = "auto" }
+                    onComplete: () => { btn.style.display = "block", controls.enabled = false, hotspot.element ? FadeInElement(hotspot.element) : "", cssContainer.style.pointerEvents = "auto", animating = false }
                 })
                 controls.update()
                 return
@@ -736,13 +730,18 @@ function animate() {
     }
     requestAnimationFrame(animate);
 
-    deviceControlsActive ? deviceOrientationControls.update() : controls.update()
+    if(deviceControlsActive){
+        deviceOrientationControls.update() 
+        if (animating) camera.lookAt(controls.target)
+    } else {
+        controls.update()
+    }
     if (isMobile) useCrosshairSelection()
     directionalLight.updateMatrixWorld()
     directionalLight.target.updateMatrixWorld()
     camera.updateProjectionMatrix()
-        if (renderCSS) cssRenderer.render(scene2, camera);
-        else effectComposer.render();
+    if (renderCSS) cssRenderer.render(scene2, camera);
+    else effectComposer.render();
     /*console.log('camPos')
     console.log(camera.position)
     console.log('targetPos')
