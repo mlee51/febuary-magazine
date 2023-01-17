@@ -341,6 +341,9 @@ canvas.addEventListener('mousedown', (event) => {
         for (let i = 0; i < selections.length; i++) {
             if (selections[i].name === selectedObjects[0].name) {
                 if(deviceControls && deviceControlsActive){
+                    deviceOrientationControls.update()
+                    camera.getWorldDirection(controls.target)
+                    controls.target.add(camera.position)
                     deviceOrientationControls.enabled = false
                     deviceControlsActive = false
                 } 
