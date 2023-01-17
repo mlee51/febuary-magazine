@@ -33,6 +33,7 @@ var startY
 var old_deltaY = 0;
 var renderCSS = false
 var deviceControls = false
+var deviceControlsActive = false
 const selections = []
 let selectedObjects = []
 let rayCasting = false
@@ -93,7 +94,7 @@ scene.add(mesh)
 
 const scene2 = new THREE.Scene();
 scene2.scale.set(0.01, 0.01, 0.01);
-var innerHeight = require('ios-inner-height');
+
 // Sizes
 const sizes =
 {
@@ -181,6 +182,7 @@ function initDeviceOrientationControls() {
     deviceOrientationControls.enableZoom = false
     controls.enabled = false
     deviceControls = true
+    deviceControlsActive = true
 }
 
 /*if(controls.target) {
@@ -274,7 +276,7 @@ btn.onclick = function (e) {
     gsap.to(camera.up, { z: 0, duration: 2 })
     gsap.to(controls.target, {
         ...new THREE.Vector3(2.78, 1.09, -0.06), duration: 2,
-        onComplete: () => { selectedObjects = [], rayCasting = true, controls.enabled = true, cssContainer.style.pointerEvents = "none" }
+        onComplete: () => { selectedObjects = [], rayCasting = true, controls.enabled = true, cssContainer.style.pointerEvents = "none", (deviceControls && !deviceControlsActive)? deviceControlsActive = true : "" }
     })
     controls.update()
 };
@@ -333,6 +335,7 @@ canvas.addEventListener('mousedown', (event) => {
     if (rayCasting && selectedObjects.length > 0) {
         for (let i = 0; i < selections.length; i++) {
             if (selections[i].name === selectedObjects[0].name) {
+                if(deviceControls && deviceControlsActive) deviceControlsActive = false
                 outlinePass.selectedObjects = []
                 rayCasting = false
                 hotspot = selections[i]
@@ -718,7 +721,7 @@ function animate() {
     }
     requestAnimationFrame(animate);
 
-    deviceControls ? deviceOrientationControls.update() : controls.update()
+    deviceControlsActive ? deviceOrientationControls.update() : controls.update()
     if (isMobile) useCrosshairSelection()
     directionalLight.updateMatrixWorld()
     directionalLight.target.updateMatrixWorld()
