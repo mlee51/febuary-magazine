@@ -81,7 +81,7 @@ const dummy = new THREE.Object3D();
 const _position = new THREE.Vector3();
 const _normal = new THREE.Vector3();
 
-const gui = new dat.GUI()
+//const gui = new dat.GUI()
 const scene = new THREE.Scene()
 const geometry = new THREE.BoxGeometry(100, 100, 100)
 const material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
@@ -273,15 +273,18 @@ btn.onclick = function (e) {
     if (hotspot.element) hotspot.element.style.display = "none"
     btn.style.display = "none"
     controls.enabled = false
+    nextTargetPos = new THREE.Vector3(2.78, 1.09, -0.06)
     if (deviceControls && !deviceControlsActive){
         deviceOrientationControls.enabled = true
-        deviceControlsActive = true
+        deviceOrientationControls.update()
+        camera.getWorldDirection(nextTargetPos)
+        nextTargetPos.add(camera.position)
     }
     gsap.to(camera.position, { ...spawnPos, duration: 2 })
     gsap.to(camera.up, { z: 0, duration: 2 })
     gsap.to(controls.target, {
-        ...new THREE.Vector3(2.78, 1.09, -0.06), duration: 2,
-        onComplete: () => { selectedObjects = [], rayCasting = true, controls.enabled = true, cssContainer.style.pointerEvents = "none" }
+        ...nextTargetPos, duration: 2,
+        onComplete: () => { selectedObjects = [], rayCasting = true, controls.enabled = true, cssContainer.style.pointerEvents = "none", (deviceControls && !deviceControlsActive)? deviceControlsActive = true : "" }
     })
     controls.update()
 };
@@ -720,7 +723,7 @@ var cssElement = createCSS3DObject(content);
 isMobile ? cssElement.position.set(323, 251, -363) : cssElement.position.set(321.5, 231.1, -359)
 //let y = isMobile? 260:230.5
 //cssElement.position.set(321.5, y, -359)
-gui.add(cssElement.position, 'y', 200, 300, .1);
+//gui.add(cssElement.position, 'y', 200, 300, .1);
 cssElement.rotateZ(-Math.PI * 0.02)
 cssElement.rotateY(Math.PI * 0.025)
 cssElement.rotateX(-Math.PI * 0.02)
