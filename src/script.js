@@ -276,12 +276,13 @@ btn.onclick = function (e) {
     nextTargetPos = new THREE.Vector3(2.78, 1.09, -0.06)
     if (deviceControls && !deviceControlsActive){
         deviceControlsActive = true
+        deviceOrientationControls.enabled = true
     }
     gsap.to(camera.position, { ...spawnPos, duration: 2 })
     gsap.to(camera.up, { z: 0, duration: 2 })
     gsap.to(controls.target, {
         ...nextTargetPos, duration: 2,
-        onComplete: () => { selectedObjects = [], rayCasting = true, controls.enabled = true, cssContainer.style.pointerEvents = "none", deviceControls? deviceOrientationControls.enabled = true : ""}
+        onComplete: () => { selectedObjects = [], rayCasting = true, controls.enabled = true, cssContainer.style.pointerEvents = "none"}
     })
     controls.update()
 };
