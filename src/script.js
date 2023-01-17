@@ -272,11 +272,12 @@ btn.onclick = function (e) {
     if (hotspot.element) hotspot.element.style.display = "none"
     btn.style.display = "none"
     controls.enabled = false
+    if (deviceControls && !deviceControlsActive) deviceControlsActive = true
     gsap.to(camera.position, { ...spawnPos, duration: 2 })
     gsap.to(camera.up, { z: 0, duration: 2 })
     gsap.to(controls.target, {
         ...new THREE.Vector3(2.78, 1.09, -0.06), duration: 2,
-        onComplete: () => { selectedObjects = [], rayCasting = true, controls.enabled = true, cssContainer.style.pointerEvents = "none", (deviceControls && !deviceControlsActive)? deviceControlsActive = true : "" }
+        onComplete: () => { selectedObjects = [], rayCasting = true, controls.enabled = true, cssContainer.style.pointerEvents = "none" }
     })
     controls.update()
 };
