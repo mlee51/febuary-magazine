@@ -718,7 +718,7 @@ function createCSS3DObject(content) {
 }
 
 var cssElement = createCSS3DObject(content);
-isMobile ? cssElement.position.set(323, 251, -363) : cssElement.position.set(321.5, 231.1, -359)
+isMobile ? cssElement.position.set(323, 254.1, -363) : cssElement.position.set(321.5, 231.1, -359)
 //let y = isMobile? 260:230.5
 //cssElement.position.set(321.5, y, -359)
 gui.add(cssElement.position, 'y', 200, 300, .1);
