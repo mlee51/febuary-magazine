@@ -76,8 +76,9 @@ body {
 }
 
 #qr {
-    position: fixed;
     z-index: 2;
     width: 100%;
-    height: auto;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%)!important;
 }

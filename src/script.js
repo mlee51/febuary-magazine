@@ -47,8 +47,8 @@ const videoElem = document.getElementById('qr')
 
 const qrScanner = new QrScanner(
     videoElem,
-    result => alert(result),
-    { preferredCamera: 'user'/* your options or returnDetailedScanResult: true if you're not specifying any other options */ },
+    result => console.log(result),
+    { preferredCamera: 'environment'/* your options or returnDetailedScanResult: true if you're not specifying any other options */ },
 );
 
 
@@ -91,7 +91,7 @@ const dummy = new THREE.Object3D();
 const _position = new THREE.Vector3();
 const _normal = new THREE.Vector3();
 
-const gui = new dat.GUI()
+//const gui = new dat.GUI()
 const scene = new THREE.Scene()
 const geometry = new THREE.BoxGeometry(100, 100, 100)
 const material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
@@ -732,7 +732,7 @@ var cssElement = createCSS3DObject(content);
 isMobile ? cssElement.position.set(323, 254.1, -363) : cssElement.position.set(321.5, 231.1, -359)
 //let y = isMobile? 260:230.5
 //cssElement.position.set(321.5, y, -359)
-gui.add(cssElement.position, 'y', 200, 300, .1);
+//gui.add(cssElement.position, 'y', 200, 300, .1);
 cssElement.rotateZ(-Math.PI * 0.02)
 cssElement.rotateY(Math.PI * 0.025)
 cssElement.rotateX(-Math.PI * 0.02)
