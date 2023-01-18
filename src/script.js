@@ -47,8 +47,8 @@ const videoElem = document.getElementById('qr')
 
 const qrScanner = new QrScanner(
     videoElem,
-    result => alert('decoded qr code:', result),
-    { /* your options or returnDetailedScanResult: true if you're not specifying any other options */ },
+    result => alert(result),
+    { preferredCamera: 'user'/* your options or returnDetailedScanResult: true if you're not specifying any other options */ },
 );
 
 
@@ -387,7 +387,6 @@ if (!isMobile) {
     startButton.style.display = 'block'
     startButton.addEventListener('click', function () {
         qrScanner.start()
-        alert("hi")
         //initDeviceOrientationControls()
     }, false);
 }
@@ -479,8 +478,8 @@ gltfLoader.load(
                         updateAllMaterials(true)
                         const l_door = document.getElementById('leftDoor')
                         const r_door = document.getElementById('rightDoor')
-                        if (l_door) gsap.to(l_door, { x: -1000, duration: 3, onComplete: () => { l_door.style.display = 'none' } })
-                        if (r_door) gsap.to(r_door, { x: 1000, duration: 3, onComplete: () => { r_door.style.display = 'none' } })
+                        //if (l_door) gsap.to(l_door, { x: -1000, duration: 3, onComplete: () => { l_door.style.display = 'none' } })
+                        //if (r_door) gsap.to(r_door, { x: 1000, duration: 3, onComplete: () => { r_door.style.display = 'none' } })
 
                         rayCasting = true
                     }
