@@ -47,7 +47,7 @@ const videoElem = document.getElementById('qr')
 
 const qrScanner = new QrScanner(
     videoElem,
-    result => console.log(result),
+    result => alert(result.data),
     { preferredCamera: 'environment'/* your options or returnDetailedScanResult: true if you're not specifying any other options */ },
 );
 
