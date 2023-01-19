@@ -42,15 +42,38 @@ let deviceOrientationControls
 var animating = false
 var content = document.getElementById('billBoard')
 const canvas = document.querySelector('canvas')
-
+const scanButton = document.getElementById('scanner');  
+const l_door = document.getElementById('leftDoor')
+const r_door = document.getElementById('rightDoor')
 const videoElem = document.getElementById('qr')
+
 
 const qrScanner = new QrScanner(
     videoElem,
-    result => alert(result.data),
+    result => scanToActivate(result.data),
     { preferredCamera: 'environment'/* your options or returnDetailedScanResult: true if you're not specifying any other options */ },
 );
 
+function removeScanner(){
+    qrScanner.stop()
+    videoElem.remove()
+    scanButton.remove()
+    if (l_door) gsap.to(l_door, { x: -1000, duration: 3, onComplete: () => { l_door.style.display = 'none' } })
+    if (r_door) gsap.to(r_door, { x: 1000, duration: 3, onComplete: () => { r_door.style.display = 'none' } })
+}
+
+function scanToActivate(data){
+    const urlParams = new URLSearchParams(data)
+    if (urlParams.has('activate')){
+        removeScanner()
+    }
+
+}
+
+
+const queryString = window.location.search
+const urlParams = new URLSearchParams(queryString)
+if (urlParams.has('activate')) removeScanner()
 
 const _billboard = {
     name: 'billboard',
@@ -386,10 +409,14 @@ if (!isMobile) {
 } else {
     startButton.style.display = 'block'
     startButton.addEventListener('click', function () {
-        qrScanner.start()
-        //initDeviceOrientationControls()
+        initDeviceOrientationControls()
     }, false);
 }
+
+
+scanButton.addEventListener('click', function () {
+        qrScanner.start()
+    }, false);
 
 const updateAllMaterials = (floor) => {
     scene.traverse((child) => {
@@ -476,8 +503,8 @@ gltfLoader.load(
                         scene.add(grassMesh1)
                         scene.add(grassMesh2)
                         updateAllMaterials(true)
-                        const l_door = document.getElementById('leftDoor')
-                        const r_door = document.getElementById('rightDoor')
+                        //const l_door = document.getElementById('leftDoor')
+                        //const r_door = document.getElementById('rightDoor')
                         //if (l_door) gsap.to(l_door, { x: -1000, duration: 3, onComplete: () => { l_door.style.display = 'none' } })
                         //if (r_door) gsap.to(r_door, { x: 1000, duration: 3, onComplete: () => { r_door.style.display = 'none' } })
 

@@ -71,7 +71,7 @@ body {
 
 #startButton {
     position: fixed;
-    z-index: 3;
+    z-index: 1;
     display: none;
 }
 
@@ -81,4 +81,15 @@ body {
     position: absolute;
     top: 50%;
     transform: translateY(-50%)!important;
+}
+
+#scanner {
+    position: fixed;
+    z-index: 3;
+    width: 100%;
+    transform: translateY(-50%);
+    top: 50%;
+    height: 100px;
+    font-size: 50px;
+    border-radius: 100px;
 }
