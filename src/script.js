@@ -58,8 +58,8 @@ function removeScanner(){
 }
 
 function scanToActivate(data){
+    console.log(data)
     const urlParams = new URLSearchParams(data)
-    console.log(urlParams)
     alert(urlParams.has('activate'))
     if (urlParams.has('activate')){
         removeScanner()
