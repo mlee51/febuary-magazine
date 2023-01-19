@@ -46,13 +46,7 @@ const scanButton = document.getElementById('scanner');
 const l_door = document.getElementById('leftDoor')
 const r_door = document.getElementById('rightDoor')
 const videoElem = document.getElementById('qr')
-
-
-const qrScanner = new QrScanner(
-    videoElem,
-    result => scanToActivate(result.data),
-    { preferredCamera: 'environment'/* your options or returnDetailedScanResult: true if you're not specifying any other options */ },
-);
+let qrScanner
 
 function removeScanner(){
     qrScanner.stop()
@@ -67,9 +61,13 @@ function scanToActivate(data){
     if (urlParams.has('activate')){
         removeScanner()
     }
-
 }
 
+qrScanner = new QrScanner(
+    videoElem,
+    result => scanToActivate(result.data),
+    { preferredCamera: 'environment'/* your options or returnDetailedScanResult: true if you're not specifying any other options */ },
+);
 
 const queryString = window.location.search
 const urlParams = new URLSearchParams(queryString)
