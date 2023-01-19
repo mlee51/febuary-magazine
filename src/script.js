@@ -59,7 +59,6 @@ function removeScanner(){
 
 function scanToActivate(data){
     const activate = data.slice(-8);
-    console.log(activate)
     if (activate === 'activate'){
         removeScanner()
     }
