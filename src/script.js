@@ -49,6 +49,7 @@ const videoElem = document.getElementById('qr')
 let qrScanner
 
 function removeScanner(){
+    console.log('remove scanner')
     qrScanner.stop()
     videoElem.remove()
     scanButton.remove()
@@ -58,6 +59,8 @@ function removeScanner(){
 
 function scanToActivate(data){
     const urlParams = new URLSearchParams(data)
+    console.log(urlParams)
+    alert(urlParams.has('activate'))
     if (urlParams.has('activate')){
         removeScanner()
     }
